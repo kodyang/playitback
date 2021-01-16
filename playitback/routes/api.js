@@ -258,12 +258,6 @@ function searchIndex(searchKey, limit = 10) {
   return results;
 }
 
-router.get('*', function (req, res, next) {
-  res.sendStatus(404);
-})
-
-module.exports = router;
-
 
 
 //DOWNLOADING MP3 FILES API
@@ -316,13 +310,14 @@ router.get('/getAudioUrls/:id', (req, res) => {
       //urlToMp3(audioUrl, title);
 
     });
+
     const response = {
       urlsList: audio_urls,
       title: eps_title
     }
     // res.json(response)
 
-    res.send(audio_urls);
+    res.send(response);
 
   });
 
@@ -333,3 +328,10 @@ router.get('/getAudioUrls/:id', (req, res) => {
 });
 
 
+
+
+router.get('*', function (req, res, next) {
+  res.sendStatus(404);
+})
+
+module.exports = router;
