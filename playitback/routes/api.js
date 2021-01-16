@@ -264,7 +264,6 @@ router.post('/youtube/subtitles/bulk', async function(req, res, next) {
   res.json(resp);
 });
 
-function searchIndex(searchKey, limit=10) {
 function searchIndex(searchKey, limit = 10) {
   let results = indexedData.search(searchKey, {
     limit: limit
