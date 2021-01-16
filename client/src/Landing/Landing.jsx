@@ -8,7 +8,10 @@ function Landing() {
     e.preventDefault();
     console.log("Search value: ", e.target[0].value);
 
-    fetch(getHostUrl() + 'api')
+    var url = new URL(getHostUrl() + 'api/search/all');
+    url.searchParams.append("searchKey", e.target[0].value);    
+
+    fetch(getHostUrl() + 'api/search/all')
       .then(res => res.json())
       .then(data => {
         console.log(data);

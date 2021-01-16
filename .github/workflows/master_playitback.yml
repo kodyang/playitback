@@ -23,14 +23,12 @@ jobs:
     - name: npm install and build client
       run: |
         cd client
-        npm install --only=prod
+        npm install
         npm run build
-
     - name: npm install server
       run: |
         cd playitback
-        npm install --only=prod
-
+        npm install
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v2
       with:
