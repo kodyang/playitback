@@ -40,10 +40,15 @@ router.use(function (req, res, next) {
 })
 
 /* GET users listing. */
+<<<<<<< HEAD
 router.get('/status', function (req, res, next) {
   res.sendStatus(200);
+=======
+router.get('/status', function(req, res, next) {
+  // Testing ability to use environment variables
+  res.status(200).send(process.env.Test);
+>>>>>>> d06b244527e39a228cc09ff18805a5e1cd87d912
 });
-
 
 //create api
 router.get('/searchStatic', (req, res) => {
