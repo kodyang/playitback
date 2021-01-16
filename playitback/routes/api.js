@@ -16,7 +16,7 @@ router.get('/status', function(req, res, next) {
 
 var fileList = ["storage/beescript.txt", "storage/afewgoodmen.txt"];
 
-// test api
+// TODO: remove test api
 router.get('/test', (req, res, next) => {
   console.log(process.env.Test);
   res.sendStatus(200);
