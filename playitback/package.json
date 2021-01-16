@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www localhost 8000"
+    "start": "nodemon ./bin/www localhost 8000",
+    "server": "cd ../client && npm install && npm run build && --only=prod && ../playitback && npm install --only=prod && node ./bin/www"
   },
   "dependencies": {
     "async": "^3.2.0",
