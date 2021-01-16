@@ -7,13 +7,17 @@
   },
   "dependencies": {
     "async": "^3.2.0",
+    "axios": "^0.21.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "flexsearch": "^0.6.32",
+    "he": "^1.2.0",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
-    "morgan": "~1.9.1"
+    "lodash": "^4.17.20",
+    "morgan": "~1.9.1",
+    "striptags": "^3.1.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"
