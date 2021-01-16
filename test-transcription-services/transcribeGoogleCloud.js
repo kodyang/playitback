@@ -1,9 +1,4 @@
 require = require('esm')(module)
-// TODO: Transcription from file uploaded in the bucket (remote files: https://cloud.google.com/speech-to-text/docs/sync-recognize#performing_synchronous_speech_recognition_on_a_remote_file)
-// TODO: Add dependencies esm, npm install --save @google-cloud/speech (client library)
-// TODO: Authentication in prod env: https://cloud.google.com/docs/authentication/production
-// TODO: Transcribe incoming files (need to be converted to flac file format? matching sampleRateHertz & audioChannelCount?)
-// TODO: Brainstorm storage of input files, and output file transcripts (usage of Cloud buckets?)
 
 function main() {
     // Imports the Google Cloud client library
