@@ -5,15 +5,15 @@ const runTranscription = async (client, fileName) => {
 
     const gcsUri = `gs://oliver-hack-the-north/${fileName}` // pass in the URI
     const encoding = 'FLAC';
-    const sampleRateHertz = 48000; // hard coded
+    // const sampleRateHertz = 48000; // hard coded
     const languageCode = 'en-US';
     
     const config = {
         enableWordTimeOffsets: true,
         encoding: encoding,
-        sampleRateHertz: sampleRateHertz,
+        // sampleRateHertz: sampleRateHertz, // TODO
         languageCode: languageCode,
-        // audioChannelCount: 2 // don't even know what this is lol but had to hard code
+        audioChannelCount: 2 // TODO
     };
     
     /**
@@ -47,6 +47,8 @@ const runTranscription = async (client, fileName) => {
     const fileNameNoExt = fileName.split(".")[0]
     console.log(`Writing transcript to ${fileNameNoExt}.txt`)
     // console.log(`Response data: ${JSON.stringify(response)}\n`);
+    // const timeOffsets = response.resulsts
+    //      .map(result => result.alternatives[0].words)
     fs.writeFile(`./test-files/output-transcripts/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
 }
 
@@ -94,14 +96,14 @@ const main = async () => {
     const speech = require('@google-cloud/speech');
     const {Storage} = require('@google-cloud/storage');
 
-    const FILE_NAME_TO_CHANGE = 'test-audio-2' // TO CHANGE IN PROD
-    const LOCAL_FILE_PATH_BEFORE_CONVERSION = `./test-files/mp3/${FILE_NAME_TO_CHANGE}.mp3` // TO CHANGE IN PROD
+    const FILE_NAME_TO_CHANGE = 'ec0051d6f3be4f9f97bf9b503cdae5c9' // TODO CHANGE IN PROD
+    const LOCAL_FILE_PATH_BEFORE_CONVERSION = `./test-files/mp3/${FILE_NAME_TO_CHANGE}.mp3` // TODO CHANGE IN PROD
 
     //  Convert file to flac audio encoding
     const status = await convertToFlac(LOCAL_FILE_PATH_BEFORE_CONVERSION, FILE_NAME_TO_CHANGE);
     console.log(status);
 
-    const LOCAL_FILE_PATH = `./test-files/${FILE_NAME_TO_CHANGE}.flac`; // TO CHANGE IN PROD
+    const LOCAL_FILE_PATH = `./test-files/${FILE_NAME_TO_CHANGE}.flac`; // TODO CHANGE IN PROD
     
     // Storage constants
     const GOOGLE_CLOUD_PROJECT_ID = 'annular-accord-301902';
