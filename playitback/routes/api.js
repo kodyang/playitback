@@ -35,9 +35,9 @@ router.use(function(req, res, next) {
 
 /* GET users listing. */
 router.get('/status', function(req, res, next) {
-  res.sendStatus(200);
+  // Testing ability to use environment variables
+  res.status(200).send(process.env.Test);
 });
-
 
 //create api
 router.get('/searchStatic', (req, res) => {
