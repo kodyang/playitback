@@ -32,7 +32,7 @@ export default function CustomizedInputBase(props) {
     <Paper component="form" className={classes.root} onSubmit={props.search}>
       <InputBase
         className={classes.input}
-        placeholder="Search"
+        placeholder="Search something you remember hearing!"
         inputProps={{ 'aria-label': 'search' }}
       />
       <IconButton type="submit" className={classes.iconButton} aria-label="search">
