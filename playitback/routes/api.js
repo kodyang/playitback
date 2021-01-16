@@ -9,6 +9,12 @@ const axios = require('axios') // promise based requests
 const find = require('lodash').find // utility library
 const striptags = require('striptags')
 
+const path = require("path");
+const { https } = require('follow-redirects');
+
+var fetch = require('node-fetch');
+
+
 var indexedData = new FlexSearch(
   {
     doc: {
@@ -24,7 +30,7 @@ var indexedData = new FlexSearch(
 );
 
 var isIndexInitialized = false;
-router.use(function(req, res, next) {
+router.use(function (req, res, next) {
   if (!isIndexInitialized) {
     // Perform startup commands
     populateIndex();
@@ -34,7 +40,7 @@ router.use(function(req, res, next) {
 })
 
 /* GET users listing. */
-router.get('/status', function(req, res, next) {
+router.get('/status', function (req, res, next) {
   res.sendStatus(200);
 });
 
@@ -64,33 +70,33 @@ router.get('/searchStatic', (req, res) => {
     // Pass items to iterate over
     fileList,
     // Pass iterator function that is called for each item
-    function(filename, cb) {
-        // async
-        console.time("import " + filename);
-        fs.readFile(filename, 'utf8', function(err, data) {
-          if (err) throw err;
-          
-          var sentences = data.split(".");
-          for (var i = 0; i < sentences.length; ++i) {
-            index.add({
-              id: filename + i,
-              title: filename,
-              url: null,
-              timestamp: null,
-              content: sentences[i].replace(/\s+/g, ' ')
-            });
-          }
+    function (filename, cb) {
+      // async
+      console.time("import " + filename);
+      fs.readFile(filename, 'utf8', function (err, data) {
+        if (err) throw err;
 
-          console.timeEnd("import " + filename);
-          cb(err);
-        });
+        var sentences = data.split(".");
+        for (var i = 0; i < sentences.length; ++i) {
+          index.add({
+            id: filename + i,
+            title: filename,
+            url: null,
+            timestamp: null,
+            content: sentences[i].replace(/\s+/g, ' ')
+          });
+        }
+
+        console.timeEnd("import " + filename);
+        cb(err);
+      });
     },
     // Final callback after each item has been iterated over.
-    function(err) {
+    function (err) {
       console.time(`search for ${req.body.searchKey}`)
       index.search(req.body.searchKey, {
         limit: 10
-      }, function(search_results) {
+      }, function (search_results) {
 
         console.timeEnd(`search for ${req.body.searchKey}`)
 
@@ -109,7 +115,7 @@ router.get('/youtube/subtitles', async (req, res) => {
   }
 
   let data = await getSubtitles(req.body.videoId);
-  res.json({"subtitles": data});
+  res.json({ "subtitles": data });
 })
 
 async function getSubtitles(
@@ -142,7 +148,7 @@ async function getSubtitles(
   const { captionTracks } = JSON.parse(`${match}}`);
 
   let subtitle;
-  for (let i=0; i<langs.length; i++) {
+  for (let i = 0; i < langs.length; i++) {
     const lang = langs[i];
     subtitle =
       find(captionTracks, {
@@ -216,13 +222,13 @@ function indexYoutube(lines, videoId) {
 // This should be called every app startup
 function populateIndex() {
 
-  fs.readdir('storage/youtube', function(err, files) {
+  fs.readdir('storage/youtube', function (err, files) {
     if (err) {
       console.error("Could not read directory: ", err);
       return;
     }
 
-    files.forEach(function(fileName, index) {
+    files.forEach(function (fileName, index) {
       const data = fs.readFileSync('storage/youtube/' + fileName, 'utf8');
       const lines = JSON.parse(data);
       indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
@@ -230,7 +236,7 @@ function populateIndex() {
   })
 }
 
-router.get('/search/all', function(req, res, next) {
+router.get('/search/all', function (req, res, next) {
   if (!("searchKey" in req.body)) {
     res.status(400).send("Must include searchKey in header");
     return res.end();
@@ -243,17 +249,87 @@ router.get('/search/all', function(req, res, next) {
   });
 })
 
-function searchIndex(searchKey, limit=10) {
+function searchIndex(searchKey, limit = 10) {
   let results = indexedData.search(searchKey, {
     limit: limit
-  }, function(search_results) {
+  }, function (search_results) {
     return search_results;
   });
   return results;
 }
 
-router.get('*', function(req, res, next) {
+router.get('*', function (req, res, next) {
   res.sendStatus(404);
 })
 
 module.exports = router;
+
+
+
+//DOWNLOADING MP3 FILES API
+
+//var eps_title = 'ball'
+
+  //eps_title = req.body.title
+  //function that can make request
+  async function getData(eps_title) {
+    let url = 'https://listen-api.listennotes.com/api/v2/search?q=' + eps_title + '&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&genre_ids=68%2C82&published_before=1580172454000&published_after=0&only_in=title%2Cdescription&language=English&safe_mode=0'
+
+    let key = '0ac87b1a52154a49ab07451d34224f2b';
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-ListenAPI-Key': key
+      }
+    }).catch(error => console.log(error));
+    return response.json();
+
+  }
+
+  // function that returns audio file 
+  function urlToMp3(url, title) {
+    let file = fs.createWriteStream(path.join(__dirname, './downloads', title + '.flac'));
+    https.get(url, function (response) {
+      response.pipe(file);
+    });
+  }
+
+  //call listen notes API using getData function
+router.get('/getAudioUrls/:id', (req, res) => {
+  eps_title = req.params.id
+  let audio_urls = []
+  getData(eps_title).then(data => {
+
+    //  console.log('count: ' + data.count);
+
+    //2 loops through results and gives back all of the audio urls
+    data.results.forEach(function (result) {
+      let audioUrl = result.audio;
+
+      //title is id of podcast also extension of mp3 file
+//      let title = result.id;
+      //let title = result.title_original;
+
+      //console.log(audioUrl);
+      audio_urls.push(audioUrl)
+      //console.log(title);
+      //urlToMp3(audioUrl, title);
+
+    });
+    const response = {
+      urlsList: audio_urls,
+      title: eps_title
+    }
+    // res.json(response)
+
+    res.send(audio_urls);
+
+  });
+
+  //handles errors
+  process.on('uncaughtException', function (err) {
+    console.log(err);
+  });
+});
+
+
