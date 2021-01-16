@@ -8,6 +8,7 @@ const he = require('he') // html decoder
 const axios = require('axios') // promise based requests
 const find = require('lodash').find // utility library
 const striptags = require('striptags')
+const url = require('url')
 
 var indexedData = new FlexSearch(
   {
@@ -128,7 +129,8 @@ async function getSubtitles(
   );
   const langs = [
     'en-US',
-    'en'
+    'en',
+    'en-GB'
   ]
 
   const decodedData = decodeURIComponent(data);
@@ -159,7 +161,7 @@ async function getSubtitles(
   // * ensure we have found the correct subtitle lang
   if (!subtitle || (subtitle && !subtitle.baseUrl)) {
     console.log(captionTracks)
-    throw new Error(`Could not find ${lang} captions for ${videoId}`);
+    throw new Error(`Could not find captions for ${videoId}`);
   }
 
   const { data: transcript } = await axios.get(subtitle.baseUrl);
@@ -242,6 +244,19 @@ router.get('/search/all', function(req, res, next) {
     "results": searchResults
   });
 })
+
+router.post('/youtube/subtitles/bulk', async function(req, res, next) {
+
+  let resp = [];
+  for (entry of req.body) {
+    let vid = new URL(entry.titleUrl).searchParams.get("v");
+    try {
+      let data = await getSubtitles(vid);
+      resp.push(data);
+    } catch (e) {}
+  }
+  res.json(resp);
+});
 
 function searchIndex(searchKey, limit=10) {
   let results = indexedData.search(searchKey, {
