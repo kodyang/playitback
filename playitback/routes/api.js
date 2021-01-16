@@ -14,27 +14,7 @@ router.get('/status', function(req, res, next) {
   res.sendStatus(200);
 });
 
-var index = new FlexSearch(
-  // {
-  //   encode: "icase",
-  //   tokenize: "strict",
-  //   threshold: 8,
-  //   resolution: 9,
-  //   depth: 1,
-  //   async: false,
-  //   cache: false,
-  //   worker: false
-  // }
-  {
-    doc: {
-      id: "id",
-      field: [
-        "title",
-        "content"
-      ]
-    }
-  }
-);
+var fileList = ["storage/beescript.txt", "storage/afewgoodmen.txt"];
 
 //create api
 router.get('/searchStatic', (req, res) => {
@@ -43,17 +23,27 @@ router.get('/searchStatic', (req, res) => {
     res.status(400).send('Request must contain searchKey field in JSON body!');
     return;
   }
+  var index = new FlexSearch(
+    {
+      doc: {
+        id: "id",
+        field: [
+          "title",
+          "content"
+        ]
+      }
+    }
+  );
 
   async.eachSeries(
     // Pass items to iterate over
-    ["storage/beescript.txt", "storage/afewgoodmen.txt"],
+    fileList,
     // Pass iterator function that is called for each item
     function(filename, cb) {
         // async
+        console.time("import " + filename);
         fs.readFile(filename, 'utf8', function(err, data) {
           if (err) throw err;
-          console.log('OK: ' + filename);
-          // console.log(data);
           
           var sentences = data.split(".");
           for (var i = 0; i < sentences.length; ++i) {
@@ -64,14 +54,19 @@ router.get('/searchStatic', (req, res) => {
             });
           }
 
+          console.timeEnd("import " + filename);
           cb(err);
         });
     },
     // Final callback after each item has been iterated over.
     function(err) {
+      console.time(`search for ${req.body.searchKey}`)
       index.search(req.body.searchKey, {
         limit: 10
       }, function(search_results) {
+
+        console.timeEnd(`search for ${req.body.searchKey}`)
+
         res.send(search_results);
       });
     }
