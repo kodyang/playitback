@@ -9,16 +9,39 @@ const axios = require('axios') // promise based requests
 const find = require('lodash').find // utility library
 const striptags = require('striptags')
 
+var indexedData = new FlexSearch(
+  {
+    doc: {
+      id: "id",
+      field: [
+        "title",
+        "content",
+        "url",
+        "timestamp",
+      ]
+    }
+  }
+);
+
+var isIndexInitialized = false;
+router.use(function(req, res, next) {
+  if (!isIndexInitialized) {
+    // Perform startup commands
+    populateIndex();
+    isIndexInitialized = true;
+  }
+  next();
+})
+
 /* GET users listing. */
 router.get('/status', function(req, res, next) {
   res.sendStatus(200);
 });
 
-var fileList = ["storage/beescript.txt", "storage/afewgoodmen.txt"];
 
 //create api
 router.get('/searchStatic', (req, res) => {
-
+  var fileList = ["storage/beescript.txt", "storage/afewgoodmen.txt"];
   if (!('searchKey' in req.body)) {
     res.status(400).send('Request must contain searchKey field in JSON body!');
     return;
@@ -29,7 +52,9 @@ router.get('/searchStatic', (req, res) => {
         id: "id",
         field: [
           "title",
-          "content"
+          "content",
+          "url",
+          "timestamp",
         ]
       }
     }
@@ -50,6 +75,8 @@ router.get('/searchStatic', (req, res) => {
             index.add({
               id: filename + i,
               title: filename,
+              url: null,
+              timestamp: null,
               content: sentences[i].replace(/\s+/g, ' ')
             });
           }
@@ -89,7 +116,7 @@ async function getSubtitles(
   videoId,
 ) {
 
-  const path = 'storage/' + videoId + '.txt';
+  const path = 'storage/youtube/' + videoId + '.txt';
   if (fs.existsSync(path)) {
     console.log("File already cached: ", path);
     const data = fs.readFileSync(path, 'utf8');
@@ -167,7 +194,62 @@ async function getSubtitles(
     if (err) throw err;
     console.log('Saved to ', path);
   })
+
+  indexYoutube(lines, videoId);
+
   return lines;
+}
+
+function indexYoutube(lines, videoId) {
+  for (var i = 0; i < lines.length; ++i) {
+    indexedData.add({
+      id: videoId + i,
+      title: videoId,
+      url: "https://youtu.be/" + videoId + "?t=" + parseInt(lines[i].start).toString(),
+      timestamp: parseInt(lines[i].start).toString(),
+      content: lines[i].text.replace(/\s+/g, ' ')
+    });
+  }
+}
+
+// Populates the shared index with all available files in filesystem.
+// This should be called every app startup
+function populateIndex() {
+
+  fs.readdir('storage/youtube', function(err, files) {
+    if (err) {
+      console.error("Could not read directory: ", err);
+      return;
+    }
+
+    files.forEach(function(fileName, index) {
+      const data = fs.readFileSync('storage/youtube/' + fileName, 'utf8');
+      const lines = JSON.parse(data);
+      indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
+    })
+  })
+}
+
+router.get('/search/all', function(req, res, next) {
+  if (!("searchKey" in req.body)) {
+    res.status(400).send("Must include searchKey in header");
+    return res.end();
+  }
+  const searchResults = searchIndex(req.body.searchKey, req.body.limit);
+  console.log("Search Results: ", searchResults);
+  res.json({
+    "hello": "world",
+    "results": searchResults
+  });
+})
+
+function searchIndex(searchKey, limit=10) {
+  let results = indexedData.search(searchKey, {
+    limit: limit
+  }, function(search_results) {
+    return search_results;
+  });
+  return results;
 }
 
 router.get('*', function(req, res, next) {
