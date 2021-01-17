@@ -224,7 +224,7 @@ async function getSubtitles(
 
 function indexYoutube(lines, videoId) {
   for (var i = 0; i < lines.length; ++i) {
-    indexedData.add({
+    indexedData.add({ // EXAMPLE
       indexId: videoId + i,
       id: videoId,
       title: lines[i].title,
@@ -245,6 +245,8 @@ function populateIndex() {
     const lines = JSON.parse(data);
     indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
   })
+
+  // TODO: Populate with podcast files as well
 }
 
 router.get('/search/all', function (req, res, next) {
@@ -446,7 +448,10 @@ const triggerTranscribe = async () => {
         console.log("renamed");
       });
 
-      transcribeMp3File(newName);
+      transcribeMp3File(newName)
+        .then(timestamps => {
+          indexPodcast(timestamps)
+        });
     });
   });
 }
@@ -485,6 +490,19 @@ router.get('/getAudioUrls/:id', (req, res) => {
     console.log(err);
   });
 });
+
+function indexPodcast(timestamps) {
+  for (var i = 0; i < timestamps.length; i++) {
+    indexedData.add({
+      indexId: i,
+      id: null,
+      title: timestamps[i].chunk,
+      url: null,
+      timestamp: timestamps[i].startTime, // must be an int
+      // content: lines[i].text.replace(/\s+/g, ' ') // ?
+    });
+  }
+}
 
 router.get('*', function (req, res, next) {
   res.sendStatus(404);
