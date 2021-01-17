@@ -15,6 +15,7 @@ const { https } = require('follow-redirects');
 
 var fetch = require('node-fetch');
 
+const transcribeMp3Folder = require('../services/transcribeGoogleCloud'); // transcription service (pass in fileName)
 
 var indexedData = new FlexSearch(
   {

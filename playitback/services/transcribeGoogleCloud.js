@@ -1,17 +1,50 @@
 require = require('esm')(module)
 
+const transcribeMp3Folder = async (fileName) => {
+    // Setup libraries
+    const speech = require('@google-cloud/speech');
+    const {Storage} = require('@google-cloud/storage');
+
+    // File paths
+    const ROOT_FILE_PATH = `./../storage/`;
+    const LOCAL_MP3_FILE_PATH = ROOT_FILE_PATH + `mp3/${fileName}.mp3`;
+    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_PATH + `flac/${fileName}.flac`;
+
+    //  Convert file to flac audio encoding
+    const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileName);
+    console.log(status);
+
+    
+    // Storage constants
+    const GOOGLE_CLOUD_PROJECT_ID = 'annular-accord-301902';
+    // const GOOGLE_CLOUD_KEYFILE = './annular-accord-301902-9cc95c4a93f2.json';
+    const DEFAULT_BUCKET = 'oliver-hack-the-north';
+    // const FILE_NAME = LOCAL_FLAC_FILE_PATH.slice(13);
+    
+    const storage = new Storage({
+        projectId: GOOGLE_CLOUD_PROJECT_ID
+        // keyFilename: GOOGLE_CLOUD_KEYFILE
+    })
+
+    // Upload file from local to GCS
+    const fileUrl = await exportLocalFileToGCS(storage, LOCAL_FLAC_FILE_PATH, fileName, DEFAULT_BUCKET, null);
+    console.log(`File has been uploaded to:${fileUrl}`);
+
+    // Sends results to output.txt for now
+    runTranscription(new speech.SpeechClient(), fileName);
+}
+
 const runTranscription = async (client, fileName) => {
     const fs = require('fs');
 
     const gcsUri = `gs://oliver-hack-the-north/${fileName}` // pass in the URI
     const encoding = 'FLAC';
-    // const sampleRateHertz = 48000; // hard coded
     const languageCode = 'en-US';
     
     const config = {
         enableWordTimeOffsets: true,
         encoding: encoding,
-        // sampleRateHertz: sampleRateHertz, // TODO
+        // sampleRateHertz: 48000, // TODO
         languageCode: languageCode,
         audioChannelCount: 2 // TODO
     };
@@ -86,50 +119,14 @@ const convertToFlac = (filePath, fileName) => {
         .on('end', () => {
             resolve('Processing file to FLAC finished !');
         })
-        .save(`./test-files/${fileName}.flac`);
+        .save(`./../storage/flac/${fileName}.flac`);
     })
 
 }
 
-const main = async () => {
-    // Setup libraries
-    const speech = require('@google-cloud/speech');
-    const {Storage} = require('@google-cloud/storage');
+// process.on('unhandledRejection', err => {
+//     console.error(err.message);
+//     process.exitCode = 1;
+// });
 
-    const FILE_NAME_TO_CHANGE = 'ec0051d6f3be4f9f97bf9b503cdae5c9' // TODO CHANGE IN PROD
-    const LOCAL_FILE_PATH_BEFORE_CONVERSION = `./test-files/mp3/${FILE_NAME_TO_CHANGE}.mp3` // TODO CHANGE IN PROD
-
-    //  Convert file to flac audio encoding
-    const status = await convertToFlac(LOCAL_FILE_PATH_BEFORE_CONVERSION, FILE_NAME_TO_CHANGE);
-    console.log(status);
-
-    const LOCAL_FILE_PATH = `./test-files/${FILE_NAME_TO_CHANGE}.flac`; // TODO CHANGE IN PROD
-    
-    // Storage constants
-    const GOOGLE_CLOUD_PROJECT_ID = 'annular-accord-301902';
-    const GOOGLE_CLOUD_KEYFILE = './annular-accord-301902-9cc95c4a93f2.json';
-    const DEFAULT_BUCKET = 'oliver-hack-the-north';
-    const FILE_NAME = LOCAL_FILE_PATH.slice(13);
-    
-    const storage = new Storage({
-        projectId: GOOGLE_CLOUD_PROJECT_ID,
-        keyFilename: GOOGLE_CLOUD_KEYFILE
-    })
-
-    // Upload file from local to GCS
-    const fileUrl = await exportLocalFileToGCS(storage, LOCAL_FILE_PATH, FILE_NAME, DEFAULT_BUCKET, null);
-    console.log(`File has been uploaded to:${fileUrl}`);
-    
-    // Creates a speech client
-    const client = new speech.SpeechClient();
-
-    // sends results to output.txt for now
-    runTranscription(client, FILE_NAME);
-}
-
-process.on('unhandledRejection', err => {
-    console.error(err.message);
-    process.exitCode = 1;
-});
-
-main();
+exports.transcribeMp3Folder = transcribeMp3Folder;
