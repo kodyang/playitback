@@ -17,3 +17,15 @@ h1 {
   font-size: 5rem;
   text-shadow: black 0px 0px 30px;
 }
+
+h2 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.ResultsPage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 4rem;
+}
