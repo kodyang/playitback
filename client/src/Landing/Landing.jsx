@@ -18,7 +18,7 @@ function Landing() {
     console.log("Search value: ", e.target[0].value);
 
     var url = new URL(getHostUrl() + 'api/search/all');
-    url.searchParams.append("searchKey", e.target[0].value);    
+    url.searchParams.append("searchKey", e.target[0].value);
 
     fetch(url)
       .then(res => res.json())
@@ -36,10 +36,12 @@ function Landing() {
 
   return (
     <React.Fragment>
-      <NavBar />
-      <div className="Landing">
-        <h1>Search Your Audio History</h1>
-        <SearchBar search={search} />
+      <div className="LandingWrapper">
+        <NavBar />
+        <div className="Landing">
+          <h1>Search Your Audio History</h1>
+          <SearchBar search={search} />
+        </div>
       </div>
       {isSearch &&
         <div className="ResultsPage" id="resultsPage">

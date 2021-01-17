@@ -250,7 +250,7 @@ router.get('/search/all', function (req, res, next) {
     return res.end();
   }
   const searchResults = searchIndex(req.query.searchKey, req.query.limit);
-  console.log("Search Results: ", searchResults);
+  // console.log("Search Results: ", searchResults);
   res.json({
     "results": searchResults
   });
