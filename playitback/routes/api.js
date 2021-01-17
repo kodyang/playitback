@@ -248,9 +248,9 @@ function populateIndex() {
 
   podcastFiles = fs.readdirSync('storage/audioTranscripts');
   podcastFiles.forEach(function (fileName, index) {
-    const data = fs.readFileSync('storage/audioTranscripts/' + fileName, 'utf8');
+    const data = fs.readFileSync('./storage/audioTranscripts' + fileName, 'utf8');
     const timestamps = JSON.parse(data);
-    indexPodcast(timestamps, fileName.split('.')[0]);
+    // indexPodcast(timestamps, fileName.split('.')[0]);
   })
 }
 
@@ -455,10 +455,8 @@ const triggerTranscribe = async (titleHash) => {
 
       const episodeTitle = titleHash.newName;
 
-      transcribeMp3File(newName, episodeTitle)
-        .then(timestamps => {
-          indexPodcast(timestamps, newName)
-        });
+      const timestamps = transcribeMp3File(newName, episodeTitle)
+      indexPodcast(timestamps, file)
     });
   });
 }
