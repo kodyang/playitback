@@ -333,12 +333,12 @@ router.get('/spotify/callback', (req, res) => {
       json: true
     };
 
-    request.post(authOptions, function(error, response, body) {
+    request.post(authOptions, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         cookie_to_tokens[storedState] = body.access_token;
 
         var access_token = body.access_token,
-            refresh_token = body.refresh_token;
+          refresh_token = body.refresh_token;
 
         var options = {
           url: 'https://api.spotify.com/v1/me/player/recently-played',
@@ -347,7 +347,7 @@ router.get('/spotify/callback', (req, res) => {
         };
 
         // use the access token to access the Spotify Web API
-        request.get(options, function(error, response, body) {
+        request.get(options, function (error, response, body) {
           for (item of body.items) {
             console.log("Name: " + item.track.name)
             for (artist of item.track.artists) {
@@ -359,11 +359,11 @@ router.get('/spotify/callback', (req, res) => {
         });
 
         // we can also pass the token to the browser to make requests from there
-        res.redirect('/index' 
-        // +
-            // querystring.stringify({
-              // access_token: access_token,
-              // refresh_token: refresh_token
+        res.redirect('/index'
+          // +
+          // querystring.stringify({
+          // access_token: access_token,
+          // refresh_token: refresh_token
           // })
         );
       } else {
@@ -391,13 +391,13 @@ router.get('/spotify/username', (req, res) => {
     json: true
   };
 
-  request.get(options, function(error, response, body) {
+  request.get(options, function (error, response, body) {
     console.log(body);
-    res.json({"email": body.email});
+    res.json({ "email": body.email });
   });
 });
 
-var generateRandomString = function(length) {
+var generateRandomString = function (length) {
   var text = '';
   var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -410,8 +410,8 @@ var generateRandomString = function(length) {
 //DOWNLOADING MP3 FILES API
 //function that can make request
 async function getData(eps_title) {
-  let url = 'https://listen-api.listennotes.com/api/v2/search?q=' + eps_title + '&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&genre_ids=68%2C82&published_before=1580172454000&published_after=0&only_in=title%2Cdescription&language=English&safe_mode=0'
-
+  let url = 'https://listen-api.listennotes.com/api/v2/search?q=%22' + eps_title.split(' ').join('%20') + '%22&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=150&published_after=0&only_in=title&language=English&safe_mode=0';
+  console.log(url);
   let key = '0ac87b1a52154a49ab07451d34224f2b';
   const response = await fetch(url, {
     method: 'GET',
@@ -438,12 +438,12 @@ const triggerTranscribe = async () => {
       let newName = file.substring(0, Math.min(file.length, 5));
       exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
         if (error) {
-            console.log(`error: ${error.message}`);
-            return;
+          console.log(`error: ${error.message}`);
+          return;
         }
         if (stderr) {
-            console.log(`stderr: ${stderr}`);
-            return;
+          console.log(`stderr: ${stderr}`);
+          return;
         }
         console.log("renamed");
       });
@@ -461,6 +461,8 @@ router.get('/getAudioUrls/:id', (req, res) => {
   eps_title = req.params.id
   let audio_urls = []
   let file_names = []
+  let titles = []
+  let ids = []
   getData(eps_title).then(data => {
     //loops through results and gives back all of the audio urls
     data.results.forEach(function (result) {
@@ -470,14 +472,17 @@ router.get('/getAudioUrls/:id', (req, res) => {
       file_names.push(result.id); //push podcastid
 
       audio_urls.push(audioUrl);
+      titles.push(result.title_original);
+      ids.push(result.id);
       urlToMp3(audioUrl, result.id);
 
     });
 
     const response = {
+      titleList: titles,
       urlsList: audio_urls,
       fileNamesList: file_names,
-      title: eps_title
+      idList: ids
     }
 
     triggerTranscribe();
