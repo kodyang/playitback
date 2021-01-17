@@ -456,8 +456,21 @@ const triggerTranscribe = async (titleHash) => {
 
   await fs.readdir('./storage/mp3', (err, files) => {
     files.forEach(file => {
+      const oldName = file;
       let newName = file.substring(0, Math.min(file.length, 5));
       exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+        }
+        console.log("renamed");
+      });
+
+      exec(`mv ./storage/mp3/${newName} ./storage/mp3/${oldname}.mp3`, (error, stdout, stderr) => {
         if (error) {
           console.log(`error: ${error.message}`);
           return;
