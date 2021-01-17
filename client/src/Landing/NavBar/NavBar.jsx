@@ -53,7 +53,7 @@ class NavBar extends Component {
     if (spotUrl.searchParams.get('code') != null) {
       var url1 = new URL('https://accounts.spotify.com/api/token');
       url1.searchParams.set('code', spotUrl.searchParams.get('code'));
-      url1.searchParams.set('redirect_uri', "http://localhost:3000");
+      url1.searchParams.set('redirect_uri', "https://playitback.azurewebsites.net");
       url1.searchParams.set('grant_type', 'authorization_code');
       // for (const [k, v] of spotUrl.searchParams) {
       //   url1.searchParams.set(k, v);
@@ -136,7 +136,7 @@ class NavBar extends Component {
   }
 
   handleLogin(e) {
-    const redirect_uri = "http://localhost:3000";
+    const redirect_uri = "https://playitback.azurewebsites.net";
     const client_id = "6a1c30408e274a138db63e15873fd540";
     const client_secret = "56b3b0cef0f545d1b5dd20a65958f607";
     const scope = "user-read-private user-read-email user-read-recently-played"

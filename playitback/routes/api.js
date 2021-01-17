@@ -289,7 +289,7 @@ function searchIndex(searchKey, limit = 10) {
   return results;
 }
 
-const redirect_uri = "http://localhost:3000";
+const redirect_uri = "https://playitback.azurewebsites.net";
 const client_id = "6a1c30408e274a138db63e15873fd540";
 const client_secret = "56b3b0cef0f545d1b5dd20a65958f607";
 const scope = "user-read-private user-read-email user-read-recently-played";
