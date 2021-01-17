@@ -120,7 +120,7 @@ router.get('/youtube/subtitles', async (req, res) => {
     return res.end();
   }
 
-  let data = await getSubtitles(req.body.videoId);
+  let data = await getSubtitles(req.query.videoId);
   res.json({ "subtitles": data });
 })
 
