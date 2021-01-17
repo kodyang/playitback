@@ -4,11 +4,11 @@ require = require('esm')(module)
 
 const MP3_FILE_INPUT = "mp3";
 const FLAC = "flac";
-const ROOT_FILE_STORAGE_PATH = "./../storage/";
+const ROOT_FILE_STORAGE_PATH = "./storage/";
 const FLAC_FILE_OUTPUT_FOLDER = ROOT_FILE_STORAGE_PATH + `${FLAC}`;
 const AUDIO_TRANSCRIPTS_OUTPUT = ROOT_FILE_STORAGE_PATH + "audioTranscripts";
 
-const transcribeMp3File = async (fileNameNoExt) => {
+const transcribeMp3File = async (fileNameNoExt, episodeTitle) => {
     // Setup libraries
     const speech = require('@google-cloud/speech');
     const { Storage } = require('@google-cloud/storage');
@@ -40,7 +40,7 @@ const transcribeMp3File = async (fileNameNoExt) => {
     console.log(`File has been uploaded to:${fileUrl}`);
 
     // Sends results to output.txt for now
-    runTranscription(new speech.SpeechClient(), fileNameWithFlacExt);
+    runTranscription(new speech.SpeechClient(), fileNameWithFlacExt, episodeTitle);
 }
 
 const convertToFlac = (filePath, fileName) => {
@@ -84,7 +84,7 @@ const exportLocalFileToGCS = async (storage, localFilePath, fileName, bucketName
         .then(() => generatePublicUrl(bucketName, fileName));
 }
 
-const runTranscription = async (client, fileName) => {
+const runTranscription = async (client, fileName, episodeTitle) => {
     const fs = require('fs');
 
     const gcsUri = `gs://oliver-hack-the-north/${fileName}` // pass in the URI
@@ -119,28 +119,32 @@ const runTranscription = async (client, fileName) => {
 
     // Get a Promise representation of the final result of the job
     console.log("Begin transcription of audio file...");
-    // const [operation] = await client.longRunningRecognize(request);
+    const [operation] = await client.longRunningRecognize(request);
 
     // // Get a Promise representation of the final result of the job
-    // const [response] = await operation.promise();
-    // const transcription = response.results
-    //     .map(result => result.alternatives[0].transcript)
-    //     .join('\n'); // base64 string
-    // const timeOffsets = response.results[0].alternatives[0].words;
-    const timeOffsets = [{"startTime":{"nanos":900000000},"endTime":{"seconds":"1","nanos":500000000},"word":"hello"},{"startTime":{"seconds":"1","nanos":500000000},"endTime":{"seconds":"1","nanos":700000000},"word":"hello"},{"startTime":{"seconds":"1","nanos":700000000},"endTime":{"seconds":"2","nanos":900000000},"word":"test"},{"startTime":{"seconds":"2","nanos":900000000},"endTime":{"seconds":"3","nanos":700000000},"word":"1"},{"startTime":{"seconds":"3","nanos":700000000},"endTime":{"seconds":"4","nanos":100000000},"word":"hello"},{"startTime":{"seconds":"4","nanos":100000000},"endTime":{"seconds":"5","nanos":200000000},"word":"123"},{"startTime":{"seconds":"5","nanos":200000000},"endTime":{"seconds":"6","nanos":100000000},"word":"hello"},{"startTime":{"seconds":"6","nanos":100000000},"endTime":{"seconds":"6","nanos":900000000},"word":"test"},{"startTime":{"seconds":"6","nanos":900000000},"endTime":{"seconds":"7","nanos":700000000},"word":"online"},{"startTime":{"seconds":"7","nanos":700000000},"endTime":{"seconds":"8","nanos":200000000},"word":"voice"},{"startTime":{"seconds":"8","nanos":200000000},"endTime":{"seconds":"8","nanos":300000000},"word":"recorder"},{"startTime":{"seconds":"8","nanos":300000000},"endTime":{"seconds":"9","nanos":800000000},"word":"free"},{"startTime":{"seconds":"9","nanos":800000000},"endTime":{"seconds":"10","nanos":100000000},"word":"to"},{"startTime":{"seconds":"10","nanos":100000000},"endTime":{"seconds":"10","nanos":600000000},"word":"use"},{"startTime":{"seconds":"10","nanos":600000000},"endTime":{"seconds":"11","nanos":300000000},"word":"microphone"},{"startTime":{"seconds":"11","nanos":300000000},"endTime":{"seconds":"12"},"word":"settings"},{"startTime":{"seconds":"12"},"endTime":{"seconds":"12","nanos":400000000},"word":"privacy"},{"startTime":{"seconds":"12","nanos":400000000},"endTime":{"seconds":"13"},"word":"guaranteed"},{"startTime":{"seconds":"13"},"endTime":{"seconds":"13","nanos":700000000},"word":"cut"},{"startTime":{"seconds":"13","nanos":700000000},"endTime":{"seconds":"13","nanos":900000000},"word":"your"},{"startTime":{"seconds":"13","nanos":900000000},"endTime":{"seconds":"14","nanos":400000000},"word":"recording"},{"startTime":{"seconds":"14","nanos":400000000},"endTime":{"seconds":"15","nanos":300000000},"word":"Auto"},{"startTime":{"seconds":"15","nanos":300000000},"endTime":{"seconds":"15","nanos":800000000},"word":"silence"},{"startTime":{"seconds":"15","nanos":800000000},"endTime":{"seconds":"16","nanos":300000000},"word":"trimming"}];
+    const [response] = await operation.promise();
+    const transcription = response.results
+        .map(result => result.alternatives[0].transcript)
+        .join('\n'); // base64 string
+    const timeOffsets = response.results[0].alternatives[0].words;
+    // const timeOffsets = [{"startTime":{"nanos":900000000},"endTime":{"seconds":"1","nanos":500000000},"word":"hello"},{"startTime":{"seconds":"1","nanos":500000000},"endTime":{"seconds":"1","nanos":700000000},"word":"hello"},{"startTime":{"seconds":"1","nanos":700000000},"endTime":{"seconds":"2","nanos":900000000},"word":"test"},{"startTime":{"seconds":"2","nanos":900000000},"endTime":{"seconds":"3","nanos":700000000},"word":"1"},{"startTime":{"seconds":"3","nanos":700000000},"endTime":{"seconds":"4","nanos":100000000},"word":"hello"},{"startTime":{"seconds":"4","nanos":100000000},"endTime":{"seconds":"5","nanos":200000000},"word":"123"},{"startTime":{"seconds":"5","nanos":200000000},"endTime":{"seconds":"6","nanos":100000000},"word":"hello"},{"startTime":{"seconds":"6","nanos":100000000},"endTime":{"seconds":"6","nanos":900000000},"word":"test"},{"startTime":{"seconds":"6","nanos":900000000},"endTime":{"seconds":"7","nanos":700000000},"word":"online"},{"startTime":{"seconds":"7","nanos":700000000},"endTime":{"seconds":"8","nanos":200000000},"word":"voice"},{"startTime":{"seconds":"8","nanos":200000000},"endTime":{"seconds":"8","nanos":300000000},"word":"recorder"},{"startTime":{"seconds":"8","nanos":300000000},"endTime":{"seconds":"9","nanos":800000000},"word":"free"},{"startTime":{"seconds":"9","nanos":800000000},"endTime":{"seconds":"10","nanos":100000000},"word":"to"},{"startTime":{"seconds":"10","nanos":100000000},"endTime":{"seconds":"10","nanos":600000000},"word":"use"},{"startTime":{"seconds":"10","nanos":600000000},"endTime":{"seconds":"11","nanos":300000000},"word":"microphone"},{"startTime":{"seconds":"11","nanos":300000000},"endTime":{"seconds":"12"},"word":"settings"},{"startTime":{"seconds":"12"},"endTime":{"seconds":"12","nanos":400000000},"word":"privacy"},{"startTime":{"seconds":"12","nanos":400000000},"endTime":{"seconds":"13"},"word":"guaranteed"},{"startTime":{"seconds":"13"},"endTime":{"seconds":"13","nanos":700000000},"word":"cut"},{"startTime":{"seconds":"13","nanos":700000000},"endTime":{"seconds":"13","nanos":900000000},"word":"your"},{"startTime":{"seconds":"13","nanos":900000000},"endTime":{"seconds":"14","nanos":400000000},"word":"recording"},{"startTime":{"seconds":"14","nanos":400000000},"endTime":{"seconds":"15","nanos":300000000},"word":"Auto"},{"startTime":{"seconds":"15","nanos":300000000},"endTime":{"seconds":"15","nanos":800000000},"word":"silence"},{"startTime":{"seconds":"15","nanos":800000000},"endTime":{"seconds":"16","nanos":300000000},"word":"trimming"}];
 
     const fileNameNoExt = fileName.split(".")[0]
     console.log(`Writing transcript to ${fileNameNoExt}.txt`)
 
-    console.log(generateStartTimesBy10Words(timeOffsets));
+    const timestamps = generateStartTimesBy10Words(timeOffsets, episodeTitle);
+    fs.writeFileSync(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.json`, JSON.stringify(timestamps));
+    // console.log(timestamps)
+    // const data = fs.readFileSync(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.json`, 'utf-8');
+    // console.log(JSON.parse(data))
     return new Promise((resolve, reject) => {
-        resolve(generateStartTimesBy10Words(timeOffsets));
+        resolve(timestamps);
     })
         
     // fs.writeFile(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
 }
 
-function generateStartTimesBy10Words(offsets) {
+function generateStartTimesBy10Words(offsets, episodeTitle) {
     const result = []
 
     for (let i = 0; i < offsets.length - 5; i += 5) {
@@ -150,7 +154,7 @@ function generateStartTimesBy10Words(offsets) {
             const word = offsets[j].word;
             chunk += ` ${word}`;
         }
-        result.push({startTime: startTime, chunk: chunk});
+        result.push({startTime: startTime, chunk: chunk, title: episodeTitle});
     }
 
     const remainder = offsets.length % 5;
@@ -161,10 +165,10 @@ function generateStartTimesBy10Words(offsets) {
         for (let k = lastWordsStart; k < offsets.length; k++) {
             chunk += " " + offsets[k].word;
         }
-        result.push({startTime: startTime, chunk: chunk});
+        result.push({startTime: startTime, chunk: chunk, title: episodeTitle});
     }
     return result;
 }
 
-transcribeMp3File('test-audio-2'); // TODO COMMENT OUT IN PROD
-// exports.transcribeMp3File = transcribeMp3File;
+// transcribeMp3File('test-audio-2', 'episode4'); // TODO COMMENT OUT IN PROD
+exports.transcribeMp3File = transcribeMp3File;

@@ -246,7 +246,12 @@ function populateIndex() {
     indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
   })
 
-  // TODO: Populate with podcast files as well
+  podcastFiles = fs.readdirSync('storage/audioTranscripts');
+  podcastFiles.forEach(function (fileName, index) {
+    const data = fs.readFileSync('storage/audioTranscripts/' + fileName, 'utf8');
+    const timestamps = JSON.parse(data);
+    indexPodcast(timestamps, fileName.split('.')[0]);
+  })
 }
 
 router.get('/search/all', function (req, res, next) {
@@ -431,12 +436,12 @@ function urlToMp3(url, fileName) {
   });
 }
 
-const triggerTranscribe = async () => {
+const triggerTranscribe = async (titleHash) => {
 
   await fs.readdir('./storage/mp3', (err, files) => {
     files.forEach(file => {
       let newName = file.substring(0, Math.min(file.length, 5));
-      exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
+      exec(`mv ./storage/mp3/${file}.mp3 ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
         if (error) {
           console.log(`error: ${error.message}`);
           return;
@@ -448,9 +453,11 @@ const triggerTranscribe = async () => {
         console.log("renamed");
       });
 
-      transcribeMp3File(newName)
+      const episodeTitle = titleHash.newName;
+
+      transcribeMp3File(newName, episodeTitle)
         .then(timestamps => {
-          indexPodcast(timestamps)
+          indexPodcast(timestamps, newName)
         });
     });
   });
@@ -463,6 +470,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
   let file_names = []
   let titles = []
   let ids = []
+  let titleMatchId = {}
   getData(eps_title).then(data => {
     //loops through results and gives back all of the audio urls
     data.results.forEach(function (result) {
@@ -474,6 +482,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
       audio_urls.push(audioUrl);
       titles.push(result.title_original);
       ids.push(result.id);
+      titleMatchId[result.id.substring(0, Math.min(file.length, 5))] = result.title_original
       urlToMp3(audioUrl, result.id);
 
     });
@@ -485,7 +494,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
       idList: ids
     }
 
-    triggerTranscribe();
+    triggerTranscribe(titleMatchId);
 
     res.send(response);
   });
@@ -496,15 +505,15 @@ router.get('/getAudioUrls/:id', (req, res) => {
   });
 });
 
-function indexPodcast(timestamps) {
+function indexPodcast(timestamps, fileName) { // TITLES DO NOT MATCH UP BTW
   for (var i = 0; i < timestamps.length; i++) {
     indexedData.add({
-      indexId: i,
-      id: null,
-      title: timestamps[i].chunk,
+      indexId: fileName + i,
+      id: fileName,
+      title: timestamps[i].title,
       url: null,
       timestamp: timestamps[i].startTime, // must be an int
-      // content: lines[i].text.replace(/\s+/g, ' ') // ?
+      content: timestamps[i].chunk
     });
   }
 }
