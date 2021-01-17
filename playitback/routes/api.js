@@ -20,8 +20,9 @@ const transcribeMp3Folder = require('../services/transcribeGoogleCloud'); // tra
 var indexedData = new FlexSearch(
   {
     doc: {
-      id: "id",
+      id: "indexId",
       field: [
+        "id",
         "title",
         "content",
         "url",
@@ -50,7 +51,7 @@ router.get('/status', function(req, res, next) {
 //create api
 router.get('/searchStatic', (req, res) => {
   var fileList = ["storage/beescript.txt", "storage/afewgoodmen.txt"];
-  if (!('searchKey' in req.body)) {
+  if (!('searchKey' in req.query)) {
     res.status(400).send('Request must contain searchKey field in JSON body!');
     return;
   }
@@ -100,7 +101,7 @@ router.get('/searchStatic', (req, res) => {
         limit: 10
       }, function (search_results) {
 
-        console.timeEnd(`search for ${req.body.searchKey}`)
+        console.timeEnd(`search for ${req.query.searchKey}`)
 
         res.send(search_results);
       });
@@ -109,9 +110,9 @@ router.get('/searchStatic', (req, res) => {
 })
 
 router.get('/youtube/subtitles', async (req, res) => {
-  console.log(req.body);
+  console.log(req.query);
 
-  if (!('videoId' in req.body)) {
+  if (!('videoId' in req.query)) {
     res.status(400).send('Request must contain videoId field in JSON body!');
     return res.end();
   }
@@ -149,6 +150,11 @@ async function getSubtitles(
   const regex = /({"captionTracks":.*isTranslatable":(true|false)}])/;
   const [match] = regex.exec(decodedData);
   const { captionTracks } = JSON.parse(`${match}}`);
+
+  const titleRegex = /("title":{.*},"description":)/;
+  const [titlematch] = titleRegex.exec(decodedData);
+  let { title } = JSON.parse(`{${titlematch}{}}`);
+  title = title.simpleText.replace(/\+/g, " ");
 
   let subtitle;
   for (let i = 0; i < langs.length; i++) {
@@ -196,6 +202,7 @@ async function getSubtitles(
         start,
         dur,
         text,
+        title
       };
     });
 
@@ -212,8 +219,9 @@ async function getSubtitles(
 function indexYoutube(lines, videoId) {
   for (var i = 0; i < lines.length; ++i) {
     indexedData.add({
-      id: videoId + i,
-      title: videoId,
+      indexId: videoId + i,
+      id: videoId,
+      title: lines[i].title,
       url: "https://youtu.be/" + videoId + "?t=" + parseInt(lines[i].start).toString(),
       timestamp: parseInt(lines[i].start).toString(),
       content: lines[i].text.replace(/\s+/g, ' ')
@@ -225,29 +233,22 @@ function indexYoutube(lines, videoId) {
 // This should be called every app startup
 function populateIndex() {
 
-  fs.readdir('storage/youtube', function (err, files) {
-    if (err) {
-      console.error("Could not read directory: ", err);
-      return;
-    }
-
-    files.forEach(function (fileName, index) {
-      const data = fs.readFileSync('storage/youtube/' + fileName, 'utf8');
-      const lines = JSON.parse(data);
-      indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
-    })
+  files = fs.readdirSync('storage/youtube');
+  files.forEach(function(fileName, index) {
+    const data = fs.readFileSync('storage/youtube/' + fileName, 'utf8');
+    const lines = JSON.parse(data);
+    indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
   })
 }
 
-router.get('/search/all', function (req, res, next) {
-  if (!("searchKey" in req.body)) {
+router.get('/search/all', function(req, res, next) {
+  if (!("searchKey" in req.query)) {
     res.status(400).send("Must include searchKey in header");
     return res.end();
   }
-  const searchResults = searchIndex(req.body.searchKey, req.body.limit);
+  const searchResults = searchIndex(req.query.searchKey, req.query.limit);
   console.log("Search Results: ", searchResults);
   res.json({
-    "hello": "world",
     "results": searchResults
   });
 })
@@ -267,6 +268,7 @@ router.post('/youtube/subtitles/bulk', async function(req, res, next) {
 
 function searchIndex(searchKey, limit = 10) {
   let results = indexedData.search(searchKey, {
+    field: "content",
     limit: limit
   }, function (search_results) {
     return search_results;
@@ -342,9 +344,6 @@ router.get('/getAudioUrls/:id', (req, res) => {
     console.log(err);
   });
 });
-
-
-
 
 router.get('*', function (req, res, next) {
   res.sendStatus(404);
