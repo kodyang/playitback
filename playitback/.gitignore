@@ -5,6 +5,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Audio files generated
+storage/audioTranscripts/
+storage/flac/
+storage/mp3/
+
+# Oliver's private key lol
+keyfile.json
+
 # Runtime data
 pids
 *.pid
