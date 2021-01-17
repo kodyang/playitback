@@ -8,18 +8,23 @@ const AUDIO_TRANSCRIPTS_OUTPUT = ROOT_FILE_STORAGE_PATH + "audioTranscripts";
 
 const TEST_FILE_NAME = 'test-audio-2'; // TODO CHANGE IN PROD
 
-const transcribeMp3File = async (fileName) => {    
+const transcribeMp3File = async (fileNameWithExt) => {
     // Setup libraries
     const speech = require('@google-cloud/speech');
     const { Storage } = require('@google-cloud/storage');
     
     // File paths
-    const LOCAL_MP3_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${MP3_FILE_INPUT}/${fileName}.mp3`;
-    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${FLAC}/${fileName}.flac`;
-    console.log(LOCAL_MP3_FILE_PATH)
-    //  Convert file to flac audio encoding
-    const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileName);
-    console.log(status);
+    const fileNameNoExt = fileNameWithExt.split(".")[0]
+    const LOCAL_MP3_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${MP3_FILE_INPUT}/${fileNameNoExt}.mp3`;
+    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${FLAC}/${fileNameNoExt}.flac`;
+
+    try {
+        //  Convert file to flac audio encoding
+        const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileNameNoExt);
+        console.log(status);
+    } catch (error) {
+        console.log(error);
+    }
 
     // Storage constants
     const GOOGLE_CLOUD_PROJECT_ID = 'annular-accord-301902';
@@ -33,11 +38,11 @@ const transcribeMp3File = async (fileName) => {
     })
 
     // Upload file from local to GCS
-    const fileUrl = await exportLocalFileToGCS(storage, LOCAL_FLAC_FILE_PATH, fileName, DEFAULT_BUCKET, null);
+    const fileUrl = await exportLocalFileToGCS(storage, LOCAL_FLAC_FILE_PATH, fileNameWithExt, DEFAULT_BUCKET, null);
     console.log(`File has been uploaded to:${fileUrl}`);
 
     // Sends results to output.txt for now
-    runTranscription(new speech.SpeechClient(), fileName);
+    runTranscription(new speech.SpeechClient(), fileNameWithExt);
 }
 
 const convertToFlac = (filePath, fileName) => {
@@ -124,18 +129,17 @@ const runTranscription = async (client, fileName) => {
         .map(result => result.alternatives[0].transcript)
         .join('\n'); // base64 string
 
-    // const fileNameNoExt = fileName.split(".")[0]
-    console.log(`Writing transcript to ${fileName}.txt`)
+    const fileNameNoExt = fileName.split(".")[0]
+    console.log(`Writing transcript to ${fileNameNoExt}.txt`)
     // console.log(`Response data: ${JSON.stringify(response)}\n`);
     // const timeOffsets = response.resulsts
     //      .map(result => result.alternatives[0].words)
-    fs.writeFile(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileName}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
+    fs.writeFile(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
 }
 
-process.on('unhandledRejection', err => {
-    console.error(err.message);
-    process.exitCode = 1;
-});
+// process.on('unhandledRejection', err => {
+//     console.error(err.message);
+//     process.exitCode = 1;
+// });
 
 transcribeMp3File(TEST_FILE_NAME);
-// exports.transcribeMp3File = transcribeMp3File;
