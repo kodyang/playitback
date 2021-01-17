@@ -470,7 +470,7 @@ const triggerTranscribe = async (titleHash) => {
         console.log("renamed");
       });
 
-      exec(`mv ./storage/mp3/${newName} ./storage/mp3/${oldname}.mp3`, (error, stdout, stderr) => {
+      exec(`mv ./storage/mp3/${newName} ./storage/mp3/${oldName}.mp3`, (error, stdout, stderr) => {
         if (error) {
           console.log(`error: ${error.message}`);
           return;
