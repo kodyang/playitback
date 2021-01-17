@@ -429,6 +429,28 @@ function urlToMp3(url, fileName) {
   });
 }
 
+const triggerTranscribe = async () => {
+
+  await fs.readdir('./storage/mp3', (err, files) => {
+    files.forEach(file => {
+      let newName = file.substring(0, Math.min(file.length, 5));
+      exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log("renamed");
+      });
+
+      transcribeMp3File(newName);
+    });
+  });
+}
+
 //call listen notes API using getData function
 router.get('/getAudioUrls/:id', (req, res) => {
   eps_title = req.params.id
@@ -453,6 +475,8 @@ router.get('/getAudioUrls/:id', (req, res) => {
       title: eps_title
     }
 
+    triggerTranscribe();
+
     res.send(response);
   });
 
@@ -460,31 +484,6 @@ router.get('/getAudioUrls/:id', (req, res) => {
   process.on('uncaughtException', function (err) {
     console.log(err);
   });
-});
-
-router.get('/transcribe', (req, res, next) => {
-  const testfunc = async () => {
-
-    await fs.readdir('./storage/mp3', (err, files) => {
-      files.forEach(file => {
-        let newName = file.substring(0, Math.min(file.length, 5));
-        exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
-          if (error) {
-              console.log(`error: ${error.message}`);
-              return;
-          }
-          if (stderr) {
-              console.log(`stderr: ${stderr}`);
-              return;
-          }
-          console.log("renamed");
-        });
-  
-        transcribeMp3File(newName);
-      });
-    });
-  }
-  testfunc();
 });
 
 router.get('*', function (req, res, next) {
