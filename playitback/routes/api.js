@@ -456,7 +456,7 @@ const triggerTranscribe = async (titleHash) => {
   await fs.readdir('./storage/mp3', (err, files) => {
     files.forEach(file => {
       let newName = file.substring(0, Math.min(file.length, 5));
-      exec(`mv ./storage/mp3/${file}.mp3 ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
+      exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
         if (error) {
           console.log(`error: ${error.message}`);
           return;
@@ -497,7 +497,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
       audio_urls.push(audioUrl);
       titles.push(result.title_original);
       ids.push(result.id);
-      titleMatchId[result.id.substring(0, Math.min(file.length, 5))] = result.title_original
+      titleMatchId[result.id.substring(0, Math.min(result.id.length, 5))] = result.title_original
       urlToMp3(audioUrl, result.id);
 
     });
@@ -521,7 +521,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
 });
 
 function indexPodcast(timestamps, fileName) { // TITLES DO NOT MATCH UP BTW
-  for (var i = 0; i < timestamps.length; i++) {
+  for (var i = 0; i < 5; i++) {
     indexedData.add({
       indexId: fileName + i,
       id: fileName,

@@ -6,7 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Audio files generated
-storage/audioTranscripts/
 storage/flac/
 storage/mp3/
 
