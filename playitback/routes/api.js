@@ -469,7 +469,7 @@ const triggerTranscribe = async (titleHash) => {
         console.log("renamed");
       });
 
-      exec(`mv ./storage/mp3/${newName} ./storage/mp3/${oldName}.mp3`, (error, stdout, stderr) => {
+      exec(`mv ./storage/mp3/${newName}.mp3 ./storage/mp3/${oldName}`, (error, stdout, stderr) => {
         if (error) {
           console.log(`error: ${error.message}`);
           return;
@@ -483,7 +483,7 @@ const triggerTranscribe = async (titleHash) => {
 
       const episodeTitle = titleHash.newName;
 
-      const timestamps = transcribeMp3File(newName, episodeTitle)
+      const timestamps = transcribeMp3File(oldName, episodeTitle)
       indexPodcast(timestamps, file)
     });
   });
