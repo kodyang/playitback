@@ -15,7 +15,7 @@ export default function results(props) {
               <iframe
                 title={result.title}
                 className="Video"
-                src={`https://www.youtube.com/embed/${result.id}?start=${result.timestamp}`}
+                src={`https://www.youtube.com/embed/${result.id}?start=${Math.max(0, result.timestamp - 3)}`}
                 frameBorder="0"
               />
             </div>
