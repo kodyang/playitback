@@ -431,7 +431,7 @@ var generateRandomString = function (length) {
 //DOWNLOADING MP3 FILES API
 //function that can make request
 async function getData(eps_title) {
-  let url = 'https://listen-api.listennotes.com/api/v2/search?q=%22' + eps_title.split(' ').join('%20') + '%22&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=150&published_after=0&only_in=title&language=English&safe_mode=0';
+  let url = 'https://listen-api.listennotes.com/api/v2/search?q=%22' + eps_title.split(' ').join('%20') + '%22&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&published_after=0&only_in=title&language=English&safe_mode=0';
   console.log(url);
   let key = '0ac87b1a52154a49ab07451d34224f2b';
   const response = await fetch(url, {
