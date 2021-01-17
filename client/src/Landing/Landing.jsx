@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import SearchBar from './SearchBar/SearchBar';
 import Results from './Results/Results';
+import NavBar from './NavBar/NavBar';
 
 import { getHostUrl } from '../Util/Utilities';
 
@@ -35,6 +36,7 @@ function Landing() {
 
   return (
     <React.Fragment>
+      <NavBar />
       <div className="Landing">
         <h1>Search Your Audio History</h1>
         <SearchBar search={search} />

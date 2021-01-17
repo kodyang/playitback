@@ -8,7 +8,9 @@ const he = require('he') // html decoder
 const axios = require('axios') // promise based requests
 const find = require('lodash').find // utility library
 const striptags = require('striptags')
+var querystring = require('querystring');
 const url = require('url')
+var request = require('request'); // "Request" library
 
 const path = require("path");
 const { https } = require('follow-redirects');
@@ -16,7 +18,10 @@ const { https } = require('follow-redirects');
 var fetch = require('node-fetch');
 
 const { transcribeMp3File } = require('../services/transcribeGoogleCloud');
+
 const { exec } = require("child_process");
+
+const { cookie } = require('request');
 
 var indexedData = new FlexSearch(
   {
@@ -118,7 +123,7 @@ router.get('/youtube/subtitles', async (req, res) => {
     return res.end();
   }
 
-  let data = await getSubtitles(req.body.videoId);
+  let data = await getSubtitles(req.query.videoId);
   res.json({ "subtitles": data });
 })
 
@@ -277,7 +282,128 @@ function searchIndex(searchKey, limit = 10) {
   return results;
 }
 
+const redirect_uri = "http://localhost:8000/api/spotify/callback";
+const client_id = "6a1c30408e274a138db63e15873fd540";
+const client_secret = "56b3b0cef0f545d1b5dd20a65958f607";
+const scope = "user-read-private user-read-email user-read-recently-played";
+var stateKey = 'spotify_auth_state';
+var cookie_to_tokens = {};
 
+router.get('/spotify/login', (req, res) => {
+  var state = generateRandomString(16);
+
+  res.cookie(stateKey, state);
+
+  res.redirect('https://accounts.spotify.com/authorize?' +
+    querystring.stringify({
+      response_type: 'code',
+      client_id: client_id,
+      scope: scope,
+      redirect_uri: redirect_uri,
+      state: state,
+      show_dialog: true
+    }));
+});
+
+router.get('/spotify/callback', (req, res) => {
+  var code = req.query.code || null;
+  var state = req.query.state || null;
+  var storedState = req.cookies ? req.cookies[stateKey] : null;
+
+  if (state === null || state !== storedState) {
+    res.redirect('/#' +
+      querystring.stringify({
+        error: 'state_mismatch'
+      }));
+  } else {
+    // res.clearCookie(stateKey);
+
+    var authOptions = {
+      url: 'https://accounts.spotify.com/api/token',
+      form: {
+        code: code,
+        redirect_uri: redirect_uri,
+        grant_type: 'authorization_code'
+      },
+      headers: {
+        'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
+      },
+      json: true
+    };
+
+    request.post(authOptions, function(error, response, body) {
+      if (!error && response.statusCode === 200) {
+        cookie_to_tokens[storedState] = body.access_token;
+
+        var access_token = body.access_token,
+            refresh_token = body.refresh_token;
+
+        var options = {
+          url: 'https://api.spotify.com/v1/me/player/recently-played',
+          headers: { 'Authorization': 'Bearer ' + access_token },
+          json: true
+        };
+
+        // use the access token to access the Spotify Web API
+        request.get(options, function(error, response, body) {
+          for (item of body.items) {
+            console.log("Name: " + item.track.name)
+            for (artist of item.track.artists) {
+              console.log("Artist: " + artist.name)
+            }
+            console.log("Played at: " + item.played_at)
+            console.log("\n");
+          }
+        });
+
+        // we can also pass the token to the browser to make requests from there
+        res.redirect('/index' 
+        // +
+            // querystring.stringify({
+              // access_token: access_token,
+              // refresh_token: refresh_token
+          // })
+        );
+      } else {
+        res.redirect('/#' +
+          querystring.stringify({
+            error: 'invalid_token'
+          }));
+      }
+    });
+  }
+});
+
+router.get('/spotify/username', (req, res) => {
+  var storedState = req.cookies ? req.cookies[stateKey] : null;
+  // if (storedState === null || !cookie_to_tokens.has(storedState)) {
+  //   res.status(403).send("Invalid session");
+  //   return;
+  // }
+
+  var access_token = cookie_to_tokens[storedState];
+
+  var options = {
+    url: 'https://api.spotify.com/v1/me',
+    headers: { 'Authorization': 'Bearer ' + access_token },
+    json: true
+  };
+
+  request.get(options, function(error, response, body) {
+    console.log(body);
+    res.json({"email": body.email});
+  });
+});
+
+var generateRandomString = function(length) {
+  var text = '';
+  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (var i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+};
 
 //DOWNLOADING MP3 FILES API
 //function that can make request
