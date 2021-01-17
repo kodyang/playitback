@@ -7,6 +7,7 @@
     "server": "cd ../client && npm install --only=prod && npm run build && cd ../playitback && npm install --only=prod && node ./bin/www"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "@google-cloud/speech": "^4.2.0",
     "@google-cloud/storage": "^5.7.2",
     "async": "^3.2.0",
@@ -16,6 +17,7 @@
     "esm": "^3.2.25",
     "express": "~4.16.1",
     "flexsearch": "^0.6.32",
+    "fluent-ffmpeg": "^2.1.2",
     "he": "^1.2.0",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",

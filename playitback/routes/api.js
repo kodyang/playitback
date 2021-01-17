@@ -15,7 +15,7 @@ const { https } = require('follow-redirects');
 
 var fetch = require('node-fetch');
 
-const transcribeMp3File = require('../services/transcribeGoogleCloud');
+const {transcribeMp3File} = require('../services/transcribeGoogleCloud');
 
 var indexedData = new FlexSearch(
   {
@@ -43,7 +43,7 @@ router.use(function (req, res, next) {
 })
 
 /* GET users listing. */
-router.get('/status', function(req, res, next) {
+router.get('/status', function (req, res, next) {
   // Testing ability to use environment variables
   res.status(200).send(process.env.Test);
 });
@@ -234,14 +234,14 @@ function indexYoutube(lines, videoId) {
 function populateIndex() {
 
   files = fs.readdirSync('storage/youtube');
-  files.forEach(function(fileName, index) {
+  files.forEach(function (fileName, index) {
     const data = fs.readFileSync('storage/youtube/' + fileName, 'utf8');
     const lines = JSON.parse(data);
     indexYoutube(lines, fileName.split('.').slice(0, -1).join('.'));
   })
 }
 
-router.get('/search/all', function(req, res, next) {
+router.get('/search/all', function (req, res, next) {
   if (!("searchKey" in req.query)) {
     res.status(400).send("Must include searchKey in header");
     return res.end();
@@ -253,7 +253,7 @@ router.get('/search/all', function(req, res, next) {
   });
 })
 
-router.post('/youtube/subtitles/bulk', async function(req, res, next) {
+router.post('/youtube/subtitles/bulk', async function (req, res, next) {
 
   let resp = [];
   for (entry of req.body) {
@@ -261,7 +261,7 @@ router.post('/youtube/subtitles/bulk', async function(req, res, next) {
     try {
       let data = await getSubtitles(vid);
       resp.push(data);
-    } catch (e) {}
+    } catch (e) { }
   }
   res.json(resp);
 });
@@ -282,63 +282,58 @@ function searchIndex(searchKey, limit = 10) {
 
 //var eps_title = 'ball'
 
-  //eps_title = req.body.title
-  //function that can make request
-  async function getData(eps_title) {
-    let url = 'https://listen-api.listennotes.com/api/v2/search?q=' + eps_title + '&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&genre_ids=68%2C82&published_before=1580172454000&published_after=0&only_in=title%2Cdescription&language=English&safe_mode=0'
+//eps_title = req.body.title
+//function that can make request
+async function getData(eps_title) {
+  let url = 'https://listen-api.listennotes.com/api/v2/search?q=' + eps_title + '&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&genre_ids=68%2C82&published_before=1580172454000&published_after=0&only_in=title%2Cdescription&language=English&safe_mode=0'
 
-    let key = '0ac87b1a52154a49ab07451d34224f2b';
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'X-ListenAPI-Key': key
-      }
-    }).catch(error => console.log(error));
-    return response.json();
+  let key = '0ac87b1a52154a49ab07451d34224f2b';
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'X-ListenAPI-Key': key
+    }
+  }).catch(error => console.log(error));
+  return response.json();
 
-  }
+}
 
-  // function that returns audio file 
-  function urlToMp3(url, fileName) {
-    let file = fs.createWriteStream(path.join(__dirname, '../storage/audio_files/', fileName + '.mp3'));
-    https.get(url, function (response) {
-      response.pipe(file);
-    });
-  }
+// function that returns audio file 
+function urlToMp3(url, fileName) {
+  let file = fs.createWriteStream(path.join(__dirname, '../storage/mp3/', fileName + '.mp3'));
+  https.get(url, function (response) {
+    response.pipe(file);
+  });
+}
 
-  //call listen notes API using getData function
+//call listen notes API using getData function
 router.get('/getAudioUrls/:id', (req, res) => {
   eps_title = req.params.id
   let audio_urls = []
   let file_names = []
   getData(eps_title).then(data => {
 
-    //  console.log('count: ' + data.count);
 
-    //2 loops through results and gives back all of the audio urls
+    //loops through results and gives back all of the audio urls
     data.results.forEach(function (result) {
       let audioUrl = result.audio;
 
       //title is id of podcast also extension of mp3 file
-      //let title = result.title_original;
       file_names.push(result.id); //push podcastid
-      
 
-      //console.log(audioUrl);
+
       audio_urls.push(audioUrl);
       urlToMp3(audioUrl, result.id);
-      //console.log(title);
-      //urlToMp3(audioUrl, title);
 
     });
 
     const response = {
       urlsList: audio_urls,
-      fileNameList: file_names,
+      fileNamesList: file_names,
       title: eps_title
     }
     // res.json(response)
-    
+
     /*
     response.urlsList.forEach(episode, index => {
       const file_name = response.fileNameList[index];
@@ -349,7 +344,14 @@ router.get('/getAudioUrls/:id', (req, res) => {
     });
     */
 
-    res.send(response);
+
+    // response.fileNamesList.forEach(fileName => {
+
+      // transcribeMp3File(fileName);
+
+    // })
+
+    transcribeMp3File('0ad1ea6798794b5c9a1c1a4c2cb34d13');
     /**
      * FOR TORJA
      * The function "transcribeToMp3" has been imported on line 18, it takes in a string that's the name of the mp3 file (no extension)
@@ -362,6 +364,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
      * 
      * And the resulting transcripts should appear in /storage/audioTranscripts
      */
+    res.send(response);
   });
 
   //handles errors

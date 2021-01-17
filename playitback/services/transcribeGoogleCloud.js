@@ -7,7 +7,7 @@ const AUDIO_TRANSCRIPTS_OUTPUT = "audioTranscripts"
 const transcribeMp3File = async (fileName) => {
     // Setup libraries
     const speech = require('@google-cloud/speech');
-    const {Storage} = require('@google-cloud/storage');
+    const { Storage } = require('@google-cloud/storage');
 
     // File paths
     const ROOT_FILE_PATH = `./../storage/`;
@@ -18,13 +18,13 @@ const transcribeMp3File = async (fileName) => {
     const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileName);
     console.log(status);
 
-    
+
     // Storage constants
     const GOOGLE_CLOUD_PROJECT_ID = 'annular-accord-301902';
     // const GOOGLE_CLOUD_KEYFILE = './annular-accord-301902-9cc95c4a93f2.json';
     const DEFAULT_BUCKET = 'oliver-hack-the-north';
     // const FILE_NAME = LOCAL_FLAC_FILE_PATH.slice(13);
-    
+
     const storage = new Storage({
         projectId: GOOGLE_CLOUD_PROJECT_ID
         // keyFilename: GOOGLE_CLOUD_KEYFILE
@@ -72,7 +72,7 @@ const exportLocalFileToGCS = async (storage, localFilePath, fileName, bucketName
 
     // Create public url for files
     const generatePublicUrl = (bucketName, fileName) => `https://storage.googleapis.com/${bucketName}/${fileName}`;
-    
+
     console.log(`Uploading file to Google Cloud Storage...`);
     return bucket.upload(localFilePath, options)
         .then(() => file.makePublic())
@@ -85,7 +85,7 @@ const runTranscription = async (client, fileName) => {
     const gcsUri = `gs://oliver-hack-the-north/${fileName}` // pass in the URI
     const encoding = 'FLAC';
     const languageCode = 'en-US';
-    
+
     const config = {
         enableWordTimeOffsets: true,
         encoding: encoding,
@@ -93,7 +93,7 @@ const runTranscription = async (client, fileName) => {
         languageCode: languageCode,
         audioChannelCount: 2
     };
-    
+
     /**
     * Note: All audio files longer than one minute must be stored in a Cloud storage bucket to be transcribed by
     * speech-to-text api
@@ -102,16 +102,16 @@ const runTranscription = async (client, fileName) => {
         // content: fs.readFileSync(filename).toString('base64') // for local files
         uri: gcsUri
     };
-    
+
     const request = {
         config: config,
         audio: audio,
     };
-    
-    
+
+
     // Detects speech in the audio file. This creates a recognition job that you
     // can wait for now, or get its result later.
-    
+
     // Get a Promise representation of the final result of the job
     console.log("Begin transcription of audio file...");
     const [operation] = await client.longRunningRecognize(request);
@@ -136,4 +136,5 @@ const runTranscription = async (client, fileName) => {
 //     process.exitCode = 1;
 // });
 
+transcribeMp3File('torja');
 exports.transcribeMp3File = transcribeMp3File;
