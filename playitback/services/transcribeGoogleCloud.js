@@ -1,23 +1,25 @@
 require = require('esm')(module)
 
-const MP3_FILE_INPUT = "mp3"
-const FLAC_FILE_OUTPUT = "flac"
-const AUDIO_TRANSCRIPTS_OUTPUT = "audioTranscripts"
+const MP3_FILE_INPUT = "mp3";
+const FLAC = "flac";
+const ROOT_FILE_STORAGE_PATH = `./../storage/`;
+const FLAC_FILE_OUTPUT_FOLDER = ROOT_FILE_STORAGE_PATH + `${FLAC}`;
+const AUDIO_TRANSCRIPTS_OUTPUT = ROOT_FILE_STORAGE_PATH + "audioTranscripts";
 
-const transcribeMp3File = async (fileName) => {
+const TEST_FILE_NAME = 'test-audio-2'; // TODO CHANGE IN PROD
+
+const transcribeMp3File = async (fileName) => {    
     // Setup libraries
     const speech = require('@google-cloud/speech');
     const { Storage } = require('@google-cloud/storage');
-
+    
     // File paths
-    const ROOT_FILE_PATH = `./../storage/`;
-    const LOCAL_MP3_FILE_PATH = ROOT_FILE_PATH + `${MP3_FILE_INPUT}/${fileName}.mp3`;
-    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_PATH + `${FLAC_FILE_OUTPUT}/${fileName}.flac`;
-
+    const LOCAL_MP3_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${MP3_FILE_INPUT}/${fileName}.mp3`;
+    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${FLAC}/${fileName}.flac`;
+    console.log(LOCAL_MP3_FILE_PATH)
     //  Convert file to flac audio encoding
     const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileName);
     console.log(status);
-
 
     // Storage constants
     const GOOGLE_CLOUD_PROJECT_ID = 'annular-accord-301902';
@@ -59,7 +61,7 @@ const convertToFlac = (filePath, fileName) => {
             .on('end', () => {
                 resolve('Processing file to FLAC finished !');
             })
-            .save(`./../storage/${FLAC_FILE_OUTPUT}/${fileName}.flac`);
+            .save(`${FLAC_FILE_OUTPUT_FOLDER}/${fileName}.flac`);
     })
 
 }
@@ -122,19 +124,18 @@ const runTranscription = async (client, fileName) => {
         .map(result => result.alternatives[0].transcript)
         .join('\n'); // base64 string
 
-    const fileNameNoExt = fileName.split(".")[0]
-    console.log(`Writing transcript to ${fileNameNoExt}.txt`)
+    // const fileNameNoExt = fileName.split(".")[0]
+    console.log(`Writing transcript to ${fileName}.txt`)
     // console.log(`Response data: ${JSON.stringify(response)}\n`);
     // const timeOffsets = response.resulsts
     //      .map(result => result.alternatives[0].words)
-    fs.writeFile(`./../storage/${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
+    fs.writeFile(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileName}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
 }
 
+process.on('unhandledRejection', err => {
+    console.error(err.message);
+    process.exitCode = 1;
+});
 
-// process.on('unhandledRejection', err => {
-//     console.error(err.message);
-//     process.exitCode = 1;
-// });
-
-transcribeMp3File('torja');
-exports.transcribeMp3File = transcribeMp3File;
+transcribeMp3File(TEST_FILE_NAME);
+// exports.transcribeMp3File = transcribeMp3File;
