@@ -62,7 +62,7 @@ const convertToFlac = (filePath, fileName) => {
                 console.log('Processing: ' + progress.targetSize + ' KB converted');
             })
             .on('end', () => {
-                resolve('Processing file to FLAC finished !');
+                resolve(`Processing file to ${fileName} finished !`);
             })
             .save(`${FLAC_FILE_OUTPUT_FOLDER}/${fileName}.flac`);
     })

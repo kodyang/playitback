@@ -483,7 +483,8 @@ const triggerTranscribe = async (titleHash) => {
 
       const episodeTitle = titleHash.newName;
 
-      const timestamps = transcribeMp3File(oldName, episodeTitle)
+      const timestamps = transcribeMp3File(oldName.split('.')[0], episodeTitle)
+      // const timestamps = transcribeMp3File(newName, episodeTitle)
       indexPodcast(timestamps, file)
     });
   });
