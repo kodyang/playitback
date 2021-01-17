@@ -8,6 +8,13 @@ const he = require('he') // html decoder
 const axios = require('axios') // promise based requests
 const find = require('lodash').find // utility library
 const striptags = require('striptags')
+const url = require('url')
+
+const path = require("path");
+const { https } = require('follow-redirects');
+
+var fetch = require('node-fetch');
+
 
 var indexedData = new FlexSearch(
   {
@@ -25,7 +32,7 @@ var indexedData = new FlexSearch(
 );
 
 var isIndexInitialized = false;
-router.use(function(req, res, next) {
+router.use(function (req, res, next) {
   if (!isIndexInitialized) {
     // Perform startup commands
     populateIndex();
@@ -36,9 +43,9 @@ router.use(function(req, res, next) {
 
 /* GET users listing. */
 router.get('/status', function(req, res, next) {
-  res.sendStatus(200);
+  // Testing ability to use environment variables
+  res.status(200).send(process.env.Test);
 });
-
 
 //create api
 router.get('/searchStatic', (req, res) => {
@@ -65,33 +72,33 @@ router.get('/searchStatic', (req, res) => {
     // Pass items to iterate over
     fileList,
     // Pass iterator function that is called for each item
-    function(filename, cb) {
-        // async
-        console.time("import " + filename);
-        fs.readFile(filename, 'utf8', function(err, data) {
-          if (err) throw err;
-          
-          var sentences = data.split(".");
-          for (var i = 0; i < sentences.length; ++i) {
-            index.add({
-              id: filename + i,
-              title: filename,
-              url: null,
-              timestamp: null,
-              content: sentences[i].replace(/\s+/g, ' ')
-            });
-          }
+    function (filename, cb) {
+      // async
+      console.time("import " + filename);
+      fs.readFile(filename, 'utf8', function (err, data) {
+        if (err) throw err;
 
-          console.timeEnd("import " + filename);
-          cb(err);
-        });
+        var sentences = data.split(".");
+        for (var i = 0; i < sentences.length; ++i) {
+          index.add({
+            id: filename + i,
+            title: filename,
+            url: null,
+            timestamp: null,
+            content: sentences[i].replace(/\s+/g, ' ')
+          });
+        }
+
+        console.timeEnd("import " + filename);
+        cb(err);
+      });
     },
     // Final callback after each item has been iterated over.
-    function(err) {
-      console.time(`search for ${req.query.searchKey}`)
-      index.search(req.query.searchKey, {
+    function (err) {
+      console.time(`search for ${req.body.searchKey}`)
+      index.search(req.body.searchKey, {
         limit: 10
-      }, function(search_results) {
+      }, function (search_results) {
 
         console.timeEnd(`search for ${req.query.searchKey}`)
 
@@ -109,8 +116,8 @@ router.get('/youtube/subtitles', async (req, res) => {
     return res.end();
   }
 
-  let data = await getSubtitles(req.query.videoId);
-  res.json({"subtitles": data});
+  let data = await getSubtitles(req.body.videoId);
+  res.json({ "subtitles": data });
 })
 
 async function getSubtitles(
@@ -129,7 +136,8 @@ async function getSubtitles(
   );
   const langs = [
     'en-US',
-    'en'
+    'en',
+    'en-GB'
   ]
 
   const decodedData = decodeURIComponent(data);
@@ -148,7 +156,7 @@ async function getSubtitles(
   title = title.simpleText.replace(/\+/g, " ");
 
   let subtitle;
-  for (let i=0; i<langs.length; i++) {
+  for (let i = 0; i < langs.length; i++) {
     const lang = langs[i];
     subtitle =
       find(captionTracks, {
@@ -165,7 +173,7 @@ async function getSubtitles(
   // * ensure we have found the correct subtitle lang
   if (!subtitle || (subtitle && !subtitle.baseUrl)) {
     console.log(captionTracks)
-    throw new Error(`Could not find ${lang} captions for ${videoId}`);
+    throw new Error(`Could not find captions for ${videoId}`);
   }
 
   const { data: transcript } = await axios.get(subtitle.baseUrl);
@@ -244,17 +252,102 @@ router.get('/search/all', function(req, res, next) {
   });
 })
 
-function searchIndex(searchKey, limit=10) {
+router.post('/youtube/subtitles/bulk', async function(req, res, next) {
+
+  let resp = [];
+  for (entry of req.body) {
+    let vid = new URL(entry.titleUrl).searchParams.get("v");
+    try {
+      let data = await getSubtitles(vid);
+      resp.push(data);
+    } catch (e) {}
+  }
+  res.json(resp);
+});
+
+function searchIndex(searchKey, limit = 10) {
   let results = indexedData.search(searchKey, {
     field: "content",
     limit: limit
-  }, function(search_results) {
+  }, function (search_results) {
     return search_results;
   });
   return results;
 }
 
-router.get('*', function(req, res, next) {
+
+
+//DOWNLOADING MP3 FILES API
+
+//var eps_title = 'ball'
+
+  //eps_title = req.body.title
+  //function that can make request
+  async function getData(eps_title) {
+    let url = 'https://listen-api.listennotes.com/api/v2/search?q=' + eps_title + '&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&genre_ids=68%2C82&published_before=1580172454000&published_after=0&only_in=title%2Cdescription&language=English&safe_mode=0'
+
+    let key = '0ac87b1a52154a49ab07451d34224f2b';
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-ListenAPI-Key': key
+      }
+    }).catch(error => console.log(error));
+    return response.json();
+
+  }
+
+  // function that returns audio file 
+  function urlToMp3(url, title) {
+    let file = fs.createWriteStream(path.join(__dirname, './downloads', title + '.flac'));
+    https.get(url, function (response) {
+      response.pipe(file);
+    });
+  }
+
+  //call listen notes API using getData function
+router.get('/getAudioUrls/:id', (req, res) => {
+  eps_title = req.params.id
+  let audio_urls = []
+  getData(eps_title).then(data => {
+
+    //  console.log('count: ' + data.count);
+
+    //2 loops through results and gives back all of the audio urls
+    data.results.forEach(function (result) {
+      let audioUrl = result.audio;
+
+      //title is id of podcast also extension of mp3 file
+//      let title = result.id;
+      //let title = result.title_original;
+
+      //console.log(audioUrl);
+      audio_urls.push(audioUrl)
+      //console.log(title);
+      //urlToMp3(audioUrl, title);
+
+    });
+
+    const response = {
+      urlsList: audio_urls,
+      title: eps_title
+    }
+    // res.json(response)
+
+    res.send(response);
+
+  });
+
+  //handles errors
+  process.on('uncaughtException', function (err) {
+    console.log(err);
+  });
+});
+
+
+
+
+router.get('*', function (req, res, next) {
   res.sendStatus(404);
 })
 

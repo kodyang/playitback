@@ -7,10 +7,13 @@
     "server": "cd ../client && npm install --only=prod && npm run build && cd ../playitback && npm install --only=prod && node ./bin/www"
   },
   "dependencies": {
+    "@google-cloud/speech": "^4.2.0",
+    "@google-cloud/storage": "^5.7.2",
     "async": "^3.2.0",
     "axios": "^0.21.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
+    "esm": "^3.2.25",
     "express": "~4.16.1",
     "flexsearch": "^0.6.32",
     "he": "^1.2.0",
@@ -18,6 +21,7 @@
     "jade": "~1.11.0",
     "lodash": "^4.17.20",
     "morgan": "~1.9.1",
+    "node-fetch": "^2.6.1",
     "striptags": "^3.1.1"
   },
   "devDependencies": {
