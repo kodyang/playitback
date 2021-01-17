@@ -1,14 +1,18 @@
 require = require('esm')(module)
 
-const transcribeMp3Folder = async (fileName) => {
+const MP3_FILE_INPUT = "mp3"
+const FLAC_FILE_OUTPUT = "flac"
+const AUDIO_TRANSCRIPTS_OUTPUT = "audioTranscripts"
+
+const transcribeMp3File = async (fileName) => {
     // Setup libraries
     const speech = require('@google-cloud/speech');
     const {Storage} = require('@google-cloud/storage');
 
     // File paths
     const ROOT_FILE_PATH = `./../storage/`;
-    const LOCAL_MP3_FILE_PATH = ROOT_FILE_PATH + `mp3/${fileName}.mp3`;
-    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_PATH + `flac/${fileName}.flac`;
+    const LOCAL_MP3_FILE_PATH = ROOT_FILE_PATH + `${MP3_FILE_INPUT}/${fileName}.mp3`;
+    const LOCAL_FLAC_FILE_PATH = ROOT_FILE_PATH + `${FLAC_FILE_OUTPUT}/${fileName}.flac`;
 
     //  Convert file to flac audio encoding
     const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileName);
@@ -34,6 +38,47 @@ const transcribeMp3Folder = async (fileName) => {
     runTranscription(new speech.SpeechClient(), fileName);
 }
 
+const convertToFlac = (filePath, fileName) => {
+    const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+    const ffmpeg = require('fluent-ffmpeg');
+    ffmpeg.setFfmpegPath(ffmpegPath);
+
+    console.log("Starting file conversion to flac...");
+    return new Promise((resolve, reject) => {
+        ffmpeg(filePath)
+            .audioChannels(2)
+            .audioFrequency(48000)
+            .toFormat('flac')
+            .on('error', (err) => {
+                reject(`Error occurred during file encoding ${err}`);
+            })
+            .on('progress', (progress) => {
+                // console.log(JSON.stringify(progress));
+                console.log('Processing: ' + progress.targetSize + ' KB converted');
+            })
+            .on('end', () => {
+                resolve('Processing file to FLAC finished !');
+            })
+            .save(`./../storage/${FLAC_FILE_OUTPUT}/${fileName}.flac`);
+    })
+
+}
+
+const exportLocalFileToGCS = async (storage, localFilePath, fileName, bucketName, options) => {
+    options = options || {};
+
+    const bucket = storage.bucket(bucketName);
+    const file = bucket.file(fileName);
+
+    // Create public url for files
+    const generatePublicUrl = (bucketName, fileName) => `https://storage.googleapis.com/${bucketName}/${fileName}`;
+    
+    console.log(`Uploading file to Google Cloud Storage...`);
+    return bucket.upload(localFilePath, options)
+        .then(() => file.makePublic())
+        .then(() => generatePublicUrl(bucketName, fileName));
+}
+
 const runTranscription = async (client, fileName) => {
     const fs = require('fs');
 
@@ -44,9 +89,9 @@ const runTranscription = async (client, fileName) => {
     const config = {
         enableWordTimeOffsets: true,
         encoding: encoding,
-        // sampleRateHertz: 48000, // TODO
+        sampleRateHertz: 48000,
         languageCode: languageCode,
-        audioChannelCount: 2 // TODO
+        audioChannelCount: 2
     };
     
     /**
@@ -82,51 +127,13 @@ const runTranscription = async (client, fileName) => {
     // console.log(`Response data: ${JSON.stringify(response)}\n`);
     // const timeOffsets = response.resulsts
     //      .map(result => result.alternatives[0].words)
-    fs.writeFile(`./test-files/output-transcripts/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
+    fs.writeFile(`./../storage/${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
 }
 
-const exportLocalFileToGCS = async (storage, localFilePath, fileName, bucketName, options) => {
-    options = options || {};
-
-    const bucket = storage.bucket(bucketName);
-    const file = bucket.file(fileName);
-
-    // Create public url for files
-    const generatePublicUrl = (bucketName, fileName) => `https://storage.googleapis.com/${bucketName}/${fileName}`;
-    
-    console.log(`Uploading file to Google Cloud Storage...`);
-    return bucket.upload(localFilePath, options)
-        .then(() => file.makePublic())
-        .then(() => generatePublicUrl(bucketName, fileName));
-}
-
-const convertToFlac = (filePath, fileName) => {
-    const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-    const ffmpeg = require('fluent-ffmpeg');
-    ffmpeg.setFfmpegPath(ffmpegPath);
-
-    console.log("Starting file conversion to flac...");
-    return new Promise((resolve, reject) => {
-        ffmpeg(filePath)
-        .toFormat('flac')
-        .on('error', (err) => {
-            reject(`Error occurred during file encoding ${err}`);
-        })
-        .on('progress', (progress) => {
-            // console.log(JSON.stringify(progress));
-            console.log('Processing: ' + progress.targetSize + ' KB converted');
-        })
-        .on('end', () => {
-            resolve('Processing file to FLAC finished !');
-        })
-        .save(`./../storage/flac/${fileName}.flac`);
-    })
-
-}
 
 // process.on('unhandledRejection', err => {
 //     console.error(err.message);
 //     process.exitCode = 1;
 // });
 
-exports.transcribeMp3Folder = transcribeMp3Folder;
+exports.transcribeMp3File = transcribeMp3File;

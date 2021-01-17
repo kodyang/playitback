@@ -15,7 +15,7 @@ const { https } = require('follow-redirects');
 
 var fetch = require('node-fetch');
 
-const transcribeMp3Folder = require('../services/transcribeGoogleCloud'); // transcription service (pass in fileName)
+const transcribeMp3File = require('../services/transcribeGoogleCloud');
 
 var indexedData = new FlexSearch(
   {
@@ -336,7 +336,18 @@ router.get('/getAudioUrls/:id', (req, res) => {
     // res.json(response)
 
     res.send(response);
-
+    /**
+     * FOR TORJA
+     * The function "transcribeToMp3" has been imported on line 18, it takes in a string that's the name of the mp3 file (no extension)
+     * As long as the file is stored under /storage/mp3 this should work.
+     * 
+     * So once you have the list of fileNames something like
+     * fileNamesList.forEach(fileName => {
+     *   transcribeMp3File(fileName);
+     * })
+     * 
+     * And the resulting transcripts should appear in /storage/audioTranscripts
+     */
   });
 
   //handles errors
