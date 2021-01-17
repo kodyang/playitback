@@ -2,11 +2,9 @@ require = require('esm')(module)
 
 const MP3_FILE_INPUT = "mp3";
 const FLAC = "flac";
-const ROOT_FILE_STORAGE_PATH = `./../storage/`;
+const ROOT_FILE_STORAGE_PATH = "./storage/";
 const FLAC_FILE_OUTPUT_FOLDER = ROOT_FILE_STORAGE_PATH + `${FLAC}`;
 const AUDIO_TRANSCRIPTS_OUTPUT = ROOT_FILE_STORAGE_PATH + "audioTranscripts";
-
-const TEST_FILE_NAME = 'test-audio-2'; // TODO CHANGE IN PROD
 
 const transcribeMp3File = async (fileNameNoExt) => {
     // Setup libraries
@@ -18,6 +16,7 @@ const transcribeMp3File = async (fileNameNoExt) => {
     const fileNameWithFlacExt = `${fileNameNoExt}.flac`;
     const LOCAL_MP3_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${MP3_FILE_INPUT}/${fileNameNoExt}.mp3`;
     const LOCAL_FLAC_FILE_PATH = ROOT_FILE_STORAGE_PATH + `${FLAC}/${fileNameNoExt}.flac`;
+
 
     //  Convert file to flac audio encoding
     const status = await convertToFlac(LOCAL_MP3_FILE_PATH, fileNameNoExt);
@@ -139,5 +138,5 @@ const runTranscription = async (client, fileName) => {
 //     process.exitCode = 1;
 // });
 
-transcribeMp3File(TEST_FILE_NAME); // TODO COMMENT OUT IN PROD
-// exports.transcribeMp3File = transcribeMp3File;
+// transcribeMp3File('test-audio-2'); // TODO COMMENT OUT IN PROD
+exports.transcribeMp3File = transcribeMp3File;

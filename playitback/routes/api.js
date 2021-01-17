@@ -17,7 +17,7 @@ const { https } = require('follow-redirects');
 
 var fetch = require('node-fetch');
 
-const {transcribeMp3File} = require('../services/transcribeGoogleCloud');
+const { transcribeMp3File } = require('../services/transcribeGoogleCloud');
 const { cookie } = require('request');
 
 var indexedData = new FlexSearch(
@@ -403,10 +403,6 @@ var generateRandomString = function(length) {
 };
 
 //DOWNLOADING MP3 FILES API
-
-//var eps_title = 'ball'
-
-//eps_title = req.body.title
 //function that can make request
 async function getData(eps_title) {
   let url = 'https://listen-api.listennotes.com/api/v2/search?q=' + eps_title + '&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&genre_ids=68%2C82&published_before=1580172454000&published_after=0&only_in=title%2Cdescription&language=English&safe_mode=0'
@@ -436,15 +432,12 @@ router.get('/getAudioUrls/:id', (req, res) => {
   let audio_urls = []
   let file_names = []
   getData(eps_title).then(data => {
-
-
     //loops through results and gives back all of the audio urls
     data.results.forEach(function (result) {
       let audioUrl = result.audio;
 
       //title is id of podcast also extension of mp3 file
       file_names.push(result.id); //push podcastid
-
 
       audio_urls.push(audioUrl);
       urlToMp3(audioUrl, result.id);
@@ -468,10 +461,9 @@ router.get('/getAudioUrls/:id', (req, res) => {
     });
     */
 
-
     // response.fileNamesList.forEach(fileName => {
-
-      // transcribeMp3File(fileName);
+    //   console.log(fileName);
+    //   transcribeMp3File(fileName);
 
     // })
 
