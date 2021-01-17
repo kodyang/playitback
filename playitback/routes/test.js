@@ -1,10 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var FlexSearch = require("flexsearch");
-var async = require('async')
 var fs = require('fs');
-const url = require('url')
 
 const path = require("path");
 const { https } = require('follow-redirects');
@@ -12,6 +9,7 @@ const { https } = require('follow-redirects');
 var fetch = require('node-fetch');
 
 const { transcribeMp3File } = require('../services/transcribeGoogleCloud');
+const { exec } = require("child_process");
 
 
 //function that can make request
@@ -38,7 +36,7 @@ async function getData(eps_title) {
   }
   
   //call listen notes API using getData function
-  router.get('/hello', (req, res) => {
+  router.get('/hello', async (req, res) => {
     eps_title = req.params.id
     let audio_urls = []
     let file_names = []
@@ -54,44 +52,40 @@ async function getData(eps_title) {
         urlToMp3(audioUrl, result.id);
   
       });
+    });
   
       const response = {
         urlsList: audio_urls,
         fileNamesList: file_names,
         title: eps_title
       }
-      // res.json(response)
-  
-      /*
-      response.urlsList.forEach(episode, index => {
-        const file_name = response.fileNameList[index];
-        console.log('--------');
-        console.log(episode, file_name);
-        
-  
-      });
-      */
-  
-      response.fileNamesList.slice(3).forEach(fileName => {
-        console.log(fileName);
+
+    //   response.fileNamesList.forEach(fileName => {
+    //       fs.rename(`./storage/mp3/${fileName}`,
+    //       `./storage/mp3/${fileName}.mp3`, (err) => {
+    //         if (err) console.log('RENAME ERROR: ' + err);
+    //       })
+    //   });
+
+      response.fileNamesList.forEach(fileName => {
+        // Rename files
+        // exec(`mv ./storage/mp3/${fileName}.mp3 ./storage/mp3/a.mp3`, (error, stdout, stderr) => {
+        //     if (error) {
+        //         console.log(`error: ${error.message}`);
+        //         return;
+        //     }
+        //     if (stderr) {
+        //         console.log(`stderr: ${stderr}`);
+        //         return;
+        //     }
+        //     console.log("renamed")
+        // });
+        // console.log(fileName)
         transcribeMp3File(fileName);
-  
-      })
-    //   transcribeMp3File('5048de8a5baa4c8fb3c3c7d46ea73561')
-      /**
-       * FOR TORJA
-       * The function "transcribeToMp3" has been imported on line 18, it takes in a string that's the name of the mp3 file (no extension)
-       * As long as the file is stored under /storage/mp3 this should work.
-       * 
-       * So once you have the list of fileNames something like
-       * fileNamesList.forEach(fileName => {
-       *   transcribeMp3File(fileName);
-       * })
-       * 
-       * And the resulting transcripts should appear in /storage/audioTranscripts
-       */
-      res.send(response);
-    });
+      });
+
+    //   transcribeMp3File('6ec6ad4c243447948dfe39b986a76d3d')
+    res.send(response);
   
     //handles errors
     process.on('uncaughtException', function (err) {
