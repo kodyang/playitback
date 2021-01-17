@@ -16,6 +16,7 @@ const { https } = require('follow-redirects');
 var fetch = require('node-fetch');
 
 const { transcribeMp3File } = require('../services/transcribeGoogleCloud');
+const { exec } = require("child_process");
 
 var indexedData = new FlexSearch(
   {
@@ -325,37 +326,7 @@ router.get('/getAudioUrls/:id', (req, res) => {
       fileNamesList: file_names,
       title: eps_title
     }
-    // res.json(response)
 
-    /*
-    response.urlsList.forEach(episode, index => {
-      const file_name = response.fileNameList[index];
-      console.log('--------');
-      console.log(episode, file_name);
-      
-
-    });
-    */
-
-    // response.fileNamesList.forEach(fileName => {
-    //   console.log(fileName);
-    //   transcribeMp3File(fileName);
-
-    // })
-
-    transcribeMp3File('0ad1ea6798794b5c9a1c1a4c2cb34d13');
-    /**
-     * FOR TORJA
-     * The function "transcribeToMp3" has been imported on line 18, it takes in a string that's the name of the mp3 file (no extension)
-     * As long as the file is stored under /storage/mp3 this should work.
-     * 
-     * So once you have the list of fileNames something like
-     * fileNamesList.forEach(fileName => {
-     *   transcribeMp3File(fileName);
-     * })
-     * 
-     * And the resulting transcripts should appear in /storage/audioTranscripts
-     */
     res.send(response);
   });
 
@@ -363,6 +334,31 @@ router.get('/getAudioUrls/:id', (req, res) => {
   process.on('uncaughtException', function (err) {
     console.log(err);
   });
+});
+
+router.get('/transcribe', (req, res, next) => {
+  const testfunc = async () => {
+
+    await fs.readdir('./storage/mp3', (err, files) => {
+      files.forEach(file => {
+        let newName = file.substring(0, Math.min(file.length, 5));
+        exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
+          if (error) {
+              console.log(`error: ${error.message}`);
+              return;
+          }
+          if (stderr) {
+              console.log(`stderr: ${stderr}`);
+              return;
+          }
+          console.log("renamed");
+        });
+  
+        transcribeMp3File(newName);
+      });
+    });
+  }
+  testfunc();
 });
 
 router.get('*', function (req, res, next) {

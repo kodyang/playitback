@@ -138,5 +138,5 @@ const runTranscription = async (client, fileName) => {
 //     process.exitCode = 1;
 // });
 
-// transcribeMp3File('test-audio-2'); // TODO COMMENT OUT IN PROD
+// transcribeMp3File('6ec6ad4c243447948dfe39b986a76d3d'); // TODO COMMENT OUT IN PROD
 exports.transcribeMp3File = transcribeMp3File;
