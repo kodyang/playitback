@@ -248,6 +248,7 @@ function populateIndex() {
 
   podcastFiles = fs.readdirSync('storage/audioTranscripts');
   podcastFiles.forEach(function (fileName, index) {
+    // console.log("Adding filename: ", fileName);
     const data = fs.readFileSync('storage/audioTranscripts/' + fileName, 'utf8');
     const timestamps = JSON.parse(data);
     indexPodcast(timestamps, fileName.split('.')[0]);
@@ -521,11 +522,12 @@ router.get('/getAudioUrls/:id', (req, res) => {
 });
 
 function indexPodcast(timestamps, fileName) { // TITLES DO NOT MATCH UP BTW
-  for (var i = 0; i < 5; i++) {
+  // console.log(timestamps);
+  for (var i = 0; i < timestamps.length; i++) {
     indexedData.add({
       indexId: fileName + i,
       id: fileName,
-      title: timestamps[i].title,
+      title: null,
       url: null,
       timestamp: timestamps[i].startTime, // must be an int
       content: timestamps[i].chunk
