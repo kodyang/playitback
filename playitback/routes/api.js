@@ -298,8 +298,8 @@ function searchIndex(searchKey, limit = 10) {
   }
 
   // function that returns audio file 
-  function urlToMp3(url, title) {
-    let file = fs.createWriteStream(path.join(__dirname, './downloads', title + '.flac'));
+  function urlToMp3(url, fileName) {
+    let file = fs.createWriteStream(path.join(__dirname, '../storage/audio_files/', fileName + '.mp3'));
     https.get(url, function (response) {
       response.pipe(file);
     });
@@ -309,6 +309,7 @@ function searchIndex(searchKey, limit = 10) {
 router.get('/getAudioUrls/:id', (req, res) => {
   eps_title = req.params.id
   let audio_urls = []
+  let file_names = []
   getData(eps_title).then(data => {
 
     //  console.log('count: ' + data.count);
@@ -318,11 +319,13 @@ router.get('/getAudioUrls/:id', (req, res) => {
       let audioUrl = result.audio;
 
       //title is id of podcast also extension of mp3 file
-//      let title = result.id;
       //let title = result.title_original;
+      file_names.push(result.id); //push podcastid
+      
 
       //console.log(audioUrl);
-      audio_urls.push(audioUrl)
+      audio_urls.push(audioUrl);
+      urlToMp3(audioUrl, result.id);
       //console.log(title);
       //urlToMp3(audioUrl, title);
 
@@ -330,9 +333,20 @@ router.get('/getAudioUrls/:id', (req, res) => {
 
     const response = {
       urlsList: audio_urls,
+      fileNameList: file_names,
       title: eps_title
     }
     // res.json(response)
+    
+    /*
+    response.urlsList.forEach(episode, index => {
+      const file_name = response.fileNameList[index];
+      console.log('--------');
+      console.log(episode, file_name);
+      
+
+    });
+    */
 
     res.send(response);
 
