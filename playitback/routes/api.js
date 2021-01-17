@@ -51,7 +51,7 @@ router.use(function (req, res, next) {
 /* GET users listing. */
 router.get('/status', function (req, res, next) {
   // Testing ability to use environment variables
-  res.status(200).send(process.env.Test);
+  res.status(200).send("Test");
 });
 
 //create api
@@ -289,13 +289,14 @@ function searchIndex(searchKey, limit = 10) {
   return results;
 }
 
-const redirect_uri = "http://localhost:8000/api/spotify/callback";
+const redirect_uri = "http://localhost:3000";
 const client_id = "6a1c30408e274a138db63e15873fd540";
 const client_secret = "56b3b0cef0f545d1b5dd20a65958f607";
 const scope = "user-read-private user-read-email user-read-recently-played";
 var stateKey = 'spotify_auth_state';
 var cookie_to_tokens = {};
 
+// DEPRECATED
 router.get('/spotify/login', (req, res) => {
   var state = generateRandomString(16);
 
@@ -315,9 +316,10 @@ router.get('/spotify/login', (req, res) => {
 router.get('/spotify/callback', (req, res) => {
   var code = req.query.code || null;
   var state = req.query.state || null;
-  var storedState = req.cookies ? req.cookies[stateKey] : null;
-
-  if (state === null || state !== storedState) {
+  // var storedState = req.cookies ? req.cookies[stateKey] : null;
+  console.log('KALVIN' + storedState);
+  console.log("ALMOST THERE THE CODE IS" + code);
+  if (state === null) {
     res.redirect('/#' +
       querystring.stringify({
         error: 'state_mismatch'
@@ -329,7 +331,7 @@ router.get('/spotify/callback', (req, res) => {
       url: 'https://accounts.spotify.com/api/token',
       form: {
         code: code,
-        redirect_uri: redirect_uri,
+        redirect_uri: "http://localhost:8000/api/spotify/callback",
         grant_type: 'authorization_code'
       },
       headers: {
@@ -364,32 +366,45 @@ router.get('/spotify/callback', (req, res) => {
         });
 
         // we can also pass the token to the browser to make requests from there
-        res.redirect('/index'
-          // +
-          // querystring.stringify({
-          // access_token: access_token,
-          // refresh_token: refresh_token
+        // res.redirect('http://localhost:3000' 
+        // +
+            // querystring.stringify({
+              // access_token: access_token,
+              // refresh_token: refresh_token
           // })
-        );
+        // );
+        res.sendStatus(200);
       } else {
-        res.redirect('/#' +
-          querystring.stringify({
-            error: 'invalid_token'
-          }));
+        res.status(400).send('FAILED THE TOKEN WAS INVALID')
+        // res.redirect('/#' +
+        //   querystring.stringify({
+        //     error: 'invalid_token'
+        //   }));
       }
     });
   }
 });
 
 router.get('/spotify/username', (req, res) => {
-  var storedState = req.cookies ? req.cookies[stateKey] : null;
+  // var storedState = req.cookies ? req.cookies['access_token'] : null;
+  // console.log('KALVIN' + storedState);
   // if (storedState === null || !cookie_to_tokens.has(storedState)) {
   //   res.status(403).send("Invalid session");
   //   return;
   // }
+  
 
-  var access_token = cookie_to_tokens[storedState];
+  // var access_token = cookie_to_tokens[storedState];
+  // console.log(storedState);
+  console.log('why is nothing printing ' + req)
+  ;
+  var access_token = req.query.spotify_auth_state || null;
+  if (access_token == null) {
+    res.sendStatus(305);
+    return;
+  }
 
+  console.log("LOOK LIKE" + access_token)
   var options = {
     url: 'https://api.spotify.com/v1/me',
     headers: { 'Authorization': 'Bearer ' + access_token },
