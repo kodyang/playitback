@@ -1,4 +1,11 @@
-# Quickstart
+# Description
+Ever remember listening to a specific topic or phrase in a podcast or youtube video but don't remember where you heard it? PlayItBack is the answer! PlayItBack keeps track of what videos and podcasts you've watched and lets you search through them for specific keywords. Its fast and easy! 
+
+PlatItBack was submitted to Hack The North 2020++, submission and demo video here: https://devpost.com/software/playitback
+
+Visit the wesite here: https://playitback.z9.web.core.windows.net/
+
+# Local Development Quickstart
 
 ## Client
 ### Do this first

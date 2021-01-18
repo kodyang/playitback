@@ -430,7 +430,7 @@ var generateRandomString = function (length) {
 //DOWNLOADING MP3 FILES API
 //function that can make request
 async function getData(eps_title) {
-  let url = 'https://listen-api.listennotes.com/api/v2/search?q=%22' + eps_title.split(' ').join('%20') + '%22&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=150&published_after=0&only_in=title&language=English&safe_mode=0';
+  let url = 'https://listen-api.listennotes.com/api/v2/search?q=%22' + eps_title.split(' ').join('%20') + '%22&sort_by_date=0&type=episode&offset=0&len_min=0&len_max=5&published_after=0&only_in=title&language=English&safe_mode=0';
   console.log(url);
   let key = '0ac87b1a52154a49ab07451d34224f2b';
   const response = await fetch(url, {
@@ -455,6 +455,7 @@ const triggerTranscribe = async (titleHash) => {
 
   await fs.readdir('./storage/mp3', (err, files) => {
     files.forEach(file => {
+      const oldName = file;
       let newName = file.substring(0, Math.min(file.length, 5));
       exec(`mv ./storage/mp3/${file} ./storage/mp3/${newName}.mp3`, (error, stdout, stderr) => {
         if (error) {
@@ -468,12 +469,23 @@ const triggerTranscribe = async (titleHash) => {
         console.log("renamed");
       });
 
+      exec(`mv ./storage/mp3/${newName}.mp3 ./storage/mp3/${oldName}`, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+        }
+        console.log("renamed");
+      });
+
       const episodeTitle = titleHash.newName;
 
-      transcribeMp3File(newName, episodeTitle)
-        .then(timestamps => {
-          indexPodcast(timestamps, newName)
-        });
+      const timestamps = transcribeMp3File(oldName.split('.')[0], episodeTitle)
+      // const timestamps = transcribeMp3File(newName, episodeTitle)
+      indexPodcast(timestamps, file)
     });
   });
 }
@@ -521,11 +533,12 @@ router.get('/getAudioUrls/:id', (req, res) => {
 });
 
 function indexPodcast(timestamps, fileName) { // TITLES DO NOT MATCH UP BTW
-  for (var i = 0; i < 5; i++) {
+  // console.log(timestamps);
+  for (var i = 0; i < timestamps.length; i++) {
     indexedData.add({
       indexId: fileName + i,
       id: fileName,
-      title: timestamps[i].title,
+      title: null,
       url: null,
       timestamp: timestamps[i].startTime, // must be an int
       content: timestamps[i].chunk

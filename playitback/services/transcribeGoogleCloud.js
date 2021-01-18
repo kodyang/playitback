@@ -40,7 +40,7 @@ const transcribeMp3File = async (fileNameNoExt, episodeTitle) => {
     console.log(`File has been uploaded to:${fileUrl}`);
 
     // Sends results to output.txt for now
-    runTranscription(new speech.SpeechClient(), fileNameWithFlacExt, episodeTitle);
+    return runTranscription(new speech.SpeechClient(), fileNameWithFlacExt, episodeTitle);
 }
 
 const convertToFlac = (filePath, fileName) => {
@@ -62,7 +62,7 @@ const convertToFlac = (filePath, fileName) => {
                 console.log('Processing: ' + progress.targetSize + ' KB converted');
             })
             .on('end', () => {
-                resolve('Processing file to FLAC finished !');
+                resolve(`Processing file to ${fileName} finished !`);
             })
             .save(`${FLAC_FILE_OUTPUT_FOLDER}/${fileName}.flac`);
     })
@@ -137,9 +137,11 @@ const runTranscription = async (client, fileName, episodeTitle) => {
     // console.log(timestamps)
     // const data = fs.readFileSync(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.json`, 'utf-8');
     // console.log(JSON.parse(data))
-    return new Promise((resolve, reject) => {
-        resolve(timestamps);
-    })
+    // console.log(timestamps)
+    // return new Promise((resolve, reject) => {
+    //     resolve(timestamps);
+    // })
+    return timestamps;
         
     // fs.writeFile(`${AUDIO_TRANSCRIPTS_OUTPUT}/${fileNameNoExt}.txt`, transcription.toString(), 'utf8', (err) => { return err ? console.log(`Error writing file: ${fileNameNoExt}`) : console.log(`successful write to ${fileNameNoExt}.txt`) });
 }
