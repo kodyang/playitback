@@ -291,7 +291,7 @@ function searchIndex(searchKey, limit = 10) {
 
 const redirect_uri = "https://playitback.z9.web.core.windows.net";
 const client_id = "6a1c30408e274a138db63e15873fd540";
-const client_secret = "56b3b0cef0f545d1b5dd20a65958f607";
+const client_secret = "REMOVED";
 const scope = "user-read-private user-read-email user-read-recently-played";
 var stateKey = 'spotify_auth_state';
 var cookie_to_tokens = {};
